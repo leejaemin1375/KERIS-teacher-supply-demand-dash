@@ -12,14 +12,17 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="screen2.css?v=5">
-<script src="geo.js?v=5"></script>
-<script src="screen2-data.js?v=5"></script>
+<link rel="stylesheet" href="screen2.css?v=13">
+<script src="geo.js?v=13"></script>
+<script src="screen2-data.js?v=13"></script>
 <style>
 html,body{margin:0;padding:0;}
 a{color:#063a74;text-decoration:none;} a:hover{color:#1c589c;}
 *{box-sizing:border-box;}
 </style>
+<template id="__bundler_thumbnail">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#063a74"/><rect x="60" y="60" width="80" height="80" fill="none" stroke="#3fa654" stroke-width="6"/><text x="100" y="118" font-family="sans-serif" font-size="46" font-weight="700" fill="#fff" text-anchor="middle">2</text></svg>
+</template>
 </helmet>
 <div class="app">
   <div class="sidebar">
@@ -67,9 +70,6 @@ a{color:#063a74;text-decoration:none;} a:hover{color:#1c589c;}
 
     <div class="panel filter-panel">
       <div class="filter-bar">
-        <div class="filter-item"><label>예측기간</label>
-          <select value="{{forecastPeriod}}" onChange="{{onChangeForecastPeriod}}"><sc-for list="{{forecastPeriodOptions}}" as="o" hint-placeholder-count="2"><option value="{{o.value}}">{{o.label}}</option></sc-for></select>
-        </div>
         <div class="filter-item"><label>예측연도</label>
           <select value="{{forecastYear}}" onChange="{{onChangeForecastYear}}"><sc-for list="{{forecastYearOptions}}" as="o" hint-placeholder-count="10"><option value="{{o}}">{{o}}</option></sc-for></select>
         </div>
@@ -106,7 +106,7 @@ a{color:#063a74;text-decoration:none;} a:hover{color:#1c589c;}
             <div class="legend-note">※ 예측구간은 실제 모델 산출 결과와 연계 예정</div>
           </div>
           <div class="chart-wrap">
-            <svg viewBox="0 0 690 210" width="100%" preserveAspectRatio="none">
+            <svg viewBox="0 0 690 210" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block; height:auto; aspect-ratio:690 / 210;">
               <line x1="54" y1="12" x2="54" y2="190" stroke="#cdd1d5" stroke-width="1"/>
               <line x1="54" y1="190" x2="636" y2="190" stroke="#b1b8be" stroke-width="1"/>
               <polygon points="{{chart.bandPts}}" fill="#063a74" opacity="0.10"></polygon>
@@ -126,7 +126,7 @@ a{color:#063a74;text-decoration:none;} a:hover{color:#1c589c;}
             <div class="tick-row">
               <sc-for list="{{chart.ticks}}" as="t" hint-placeholder-count="8"><div class="tick-label" style="left:{{t.leftPct}}%;">{{t.label}}</div></sc-for>
             </div>
-            <div class="chart-badge" style="{{chartBadgeStyle}}">{{chartHero.year}} · <span style="color:{{chartHero.gapColor}}">{{chartHero.gapSigned}}명 ({{chartHero.gapRateSigned}}%)</span> {{chartHero.statusLabel}}</div>
+            <div class="chart-badge {{chartBadgeAlignClass}}" style="{{chartBadgeStyle}}">{{chartHero.year}} · <span style="color:{{chartHero.gapColor}}">{{chartHero.gapSigned}}명 ({{chartHero.gapRateSigned}}%)</span> {{chartHero.statusLabel}}</div>
             <div class="chart-tooltip {{chartHoverVisClass}}" style="{{chartTooltipStyle}}">
               <div class="ct-title">{{chartHero.year}}년 전망</div>
               <div class="ct-row"><span>예상 수요</span><b>{{chartHero.demand}}명</b></div>
@@ -143,10 +143,18 @@ a{color:#063a74;text-decoration:none;} a:hover{color:#1c589c;}
           <div class="divchart">
             <div class="divchart-baseline"></div>
             <sc-for list="{{divCols}}" as="d" hint-placeholder-count="8">
-              <button class="divcol {{d.selectedClass}}" onClick="{{d.onClick}}" title="{{d.title}}">
+              <button class="divcol {{d.selectedClass}} {{d.hoverClass}}" onClick="{{d.onClick}}" onMouseEnter="{{d.onEnter}}" onMouseLeave="{{d.onLeave}}" onFocus="{{d.onEnter}}" onBlur="{{d.onLeave}}" aria-label="{{d.title}}">
                 <div class="divcol-bar" style="{{d.style}}"></div>
               </button>
             </sc-for>
+            <div class="chart-tooltip divchart-tooltip {{divTipVisClass}} {{divTipAlignClass}}" style="{{divTipStyle}}">
+              <div class="ct-title">{{divTip.year}}년 {{divTip.kindLabel}}</div>
+              <div class="ct-row"><span>예상 수요</span><b>{{divTip.demand}}명</b></div>
+              <div class="ct-row"><span>예상 공급</span><b>{{divTip.supply}}명</b></div>
+              <div class="ct-row"><span>수급 차이</span><b style="color:{{divTip.gapColor}}">{{divTip.gapSigned}}명 ({{divTip.gapRateSigned}}%)</b></div>
+              <div class="ct-row"><span>전년 대비</span><b>{{divTip.yoy}}</b></div>
+              <div class="ct-row"><span>상태</span><b>{{divTip.statusLabel}}</b></div>
+            </div>
           </div>
           <div class="divchart-ticks">
             <sc-for list="{{divCols}}" as="d" hint-placeholder-count="8"><span>{{d.tick}}</span></sc-for>
@@ -198,10 +206,10 @@ a{color:#063a74;text-decoration:none;} a:hover{color:#1c589c;}
         <div class="panel" style="flex:0.75; min-height:0; display:flex; flex-direction:column;">
           <div class="panel-title">{{forecastYear}}년 교과별 예상 부족 교원 수</div>
           <div class="panel-sub">수요 > 공급인 교과 전체 표시 · 선택한 교과는 강조됩니다</div>
-          <sc-if value="{{topNEmpty}}" hint-placeholder-val="{{false}}">
-            <div class="topn-empty">현재 조건에서 부족이 예상되는 교과가 없습니다.</div>
-          </sc-if>
           <div class="topn-list">
+            <sc-if value="{{topNEmpty}}" hint-placeholder-val="{{false}}">
+              <div class="topn-empty">현재 조건에서 부족이 예상되는 교과가 없습니다.</div>
+            </sc-if>
             <sc-for list="{{topNItems}}" as="r" hint-placeholder-count="10">
               <div class="topn-row {{r.selClass}}">
                 <div class="topn-label">{{r.name}}</div>
@@ -226,7 +234,7 @@ class Component extends DCLogic {
   constructor(props){
     super(props);
     this.state = {
-      forecastPeriod: 5, forecastYear: 2031, region: '전체', district: '전체', level: '전체', subject: '전체', hoverKey: '', chartHover: false
+      forecastYear: 2031, region: '전체', district: '전체', level: '전체', subject: '전체', hoverKey: '', chartHover: false, divHoverYear: 0
     };
   }
 
@@ -332,7 +340,7 @@ class Component extends DCLogic {
     var districtOptions = atNational ? ['전체'] : ['전체'].concat(officesOf(st.region));
     var scopeList = atOffice ? [st.district] : drillList;
 
-    var forecastPeriod = st.forecastPeriod === 10 ? 10 : 5;
+    var forecastPeriod = 5;
     var forecastYearOptions = [];
     for (var fy = BASE_YEAR + 1; fy <= BASE_YEAR + forecastPeriod; fy++) forecastYearOptions.push(fy);
     var defaultForecastYear = BASE_YEAR + forecastPeriod;
@@ -411,11 +419,34 @@ class Component extends DCLogic {
       var style = g >= 0 ? ('bottom:50%; height:' + h + '%; background:' + barColor + ';') : ('top:50%; height:' + h + '%; background:' + barColor + ';');
       var isSel = y === forecastYear;
       return {
-        year: y, tick: String(y), title: y + '년 · 공급-수요 ' + (g >= 0 ? '+' : '') + Math.round(g) + '명',
+        year: y, tick: String(y), title: y + '년 · 공급-수요 ' + (g >= 0 ? '+' : '') + fmt0(Math.round(g)) + '명',
         style: style, selectedClass: isSel ? 'selected' : '',
+        hoverClass: st.divHoverYear === y ? 'is-hover' : '',
+        onEnter: function(){ self.setState({ divHoverYear: y }); },
+        onLeave: function(){ self.setState({ divHoverYear: 0 }); },
         onClick: isForecast ? function(){ self.setState({ forecastYear: y }); } : function(){}
       };
     });
+    var divHoverIdx = CHART_YEARS.indexOf(st.divHoverYear);
+    var divTipYear = divHoverIdx === -1 ? forecastYear : st.divHoverYear;
+    var divTipIdx = divHoverIdx === -1 ? selIdx : divHoverIdx;
+    var dtD = demandSeries[divTipIdx], dtS = supplySeries[divTipIdx];
+    var dtGap = Math.round(dtS - dtD), dtRate = (dtGap / dtD) * 100;
+    var dtPrevGap = divTipIdx > 0 ? Math.round(supplySeries[divTipIdx - 1] - demandSeries[divTipIdx - 1]) : null;
+    var dtDelta = dtPrevGap === null ? null : dtGap - dtPrevGap;
+    var divTip = {
+      year: divTipYear,
+      kindLabel: divTipYear > BASE_YEAR ? '예측' : (divTipYear === BASE_YEAR ? '현재' : '실적'),
+      demand: fmt0(dtD), supply: fmt0(dtS),
+      gapSigned: (dtGap >= 0 ? '+' : '') + fmt0(dtGap),
+      gapRateSigned: (dtRate >= 0 ? '+' : '') + dtRate.toFixed(1),
+      gapColor: dtGap >= 0 ? '#063a74' : '#de3412',
+      yoy: dtDelta === null ? '—' : ((dtDelta >= 0 ? '+' : '') + fmt0(dtDelta) + '명'),
+      statusLabel: gapStatusLabel(gapStatus(dtRate))
+    };
+    var divTipVisClass = divHoverIdx === -1 ? 'is-hidden' : '';
+    var divTipLeftPct = clamp(((divTipIdx + 0.5) / CHART_YEARS.length) * 100, 14, 86);
+    var divTipStyle = 'left:' + divTipLeftPct + '%; top:-6px;';
 
     // ---------------- real choropleth map (same GeoJSON + drill structure as Screen 1) ----------------
     function rateForUnit(name){
@@ -505,9 +536,6 @@ class Component extends DCLogic {
 
     return {
       dataAsof: DATA_ASOF,
-      forecastPeriod: forecastPeriod,
-      forecastPeriodOptions: [{ value: 5, label: '5년' }, { value: 10, label: '10년' }],
-      onChangeForecastPeriod: function(e){ self.setState({ forecastPeriod: parseInt(e.target.value, 10) }); },
       forecastYear: forecastYear, forecastYearOptions: forecastYearOptions,
       onChangeForecastYear: function(e){ self.setState({ forecastYear: parseInt(e.target.value, 10) }); },
       region: st.region, district: st.district, level: st.level, subject: st.subject,
@@ -517,7 +545,7 @@ class Component extends DCLogic {
       onChangeDistrict: function(e){ self.setState({ district: e.target.value }); },
       onChangeLevel: function(e){ self.setState({ level: e.target.value }); },
       onChangeSubject: function(e){ self.setState({ subject: e.target.value }); },
-      onReset: function(){ self.setState({ forecastPeriod: 5, forecastYear: 2031, region: '전체', district: '전체', level: '전체', subject: '전체', hoverKey: '' }); },
+      onReset: function(){ self.setState({ forecastYear: 2031, region: '전체', district: '전체', level: '전체', subject: '전체', hoverKey: '' }); },
       regionSelected: !atNational, districtSelected: atOffice, districtShort: atOffice ? officeShortName(st.district) : '',
       onDrillNational: function(){ self.setState({ region: '전체', district: '전체', hoverKey: '' }); },
       onDrillRegion: function(){ self.setState({ district: '전체', hoverKey: '' }); },
@@ -531,9 +559,9 @@ class Component extends DCLogic {
       },
       chartHero: chartHero,
       chartHoverVisClass: chartHoverVisClass,
-      chartBadgeStyle: chartBadgeStyle,
+      chartBadgeStyle: chartBadgeStyle, chartBadgeAlignClass: chartBadgeLeftPct > 62 ? 'align-right' : '',
       chartTooltipStyle: 'left:' + chartTooltipLeftPct + '%; top:' + chartTooltipTopPct + '%;',
-      divCols: divCols,
+      divCols: divCols, divTipAlignClass: divTipLeftPct > 62 ? 'align-right' : (divTipLeftPct < 24 ? 'align-left' : ''), divTip: divTip, divTipVisClass: divTipVisClass, divTipStyle: divTipStyle,
       topNItems: topNItems, topNEmpty: topNItems.length === 0
     };
   }

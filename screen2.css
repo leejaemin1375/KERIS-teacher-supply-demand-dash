@@ -363,3 +363,49 @@ table.cmp-table td, table.policy-table td{ font-size:13px; }
 .legend-row span, .page-foot span, .chart-legend-item{ white-space:nowrap; }
 
 .grid12 > .panel + .panel, .grid-row > .panel + .panel{ margin-top:0; }
+
+.panel-title{ line-height:1.3; }
+.panel-head-row, .map-head-row{ flex-wrap:wrap; row-gap:6px; }
+.panel-head-row > div:first-child, .map-head-row > div:first-child{ min-width:0; flex:1 1 auto; }
+
+/* --- 전망 차트 높이 고정 (필터 변경 시 세로 늘어남 방지) --- */
+.chart-card{ display:flex; flex-direction:column; }
+.chart-section1{ flex:0 0 auto; }
+.chart-section1 .chart-wrap{ flex:0 0 auto; height:auto; min-height:0; position:relative; }
+.chart-section1 .chart-wrap svg{ min-height:0; height:auto; max-height:280px; margin:0 auto; }
+.chart-section2{ flex:0 0 auto; }
+.chart-card > .chart-section:last-child{ margin-bottom:auto; }
+
+/* --- 연도별 수급 차이 툴팁 --- */
+.divchart{ position:relative; }
+.divcol{ cursor:pointer; }
+.divcol.is-hover .divcol-bar{ outline:2px solid var(--navy); outline-offset:0; }
+.divcol.selected .divcol-bar{ outline:2px solid #1e2124; }
+.divchart-tooltip{ position:absolute; transform:translate(-50%,-100%); z-index:9;
+  background:#fff; border:1px solid var(--rule); padding:8px 10px; min-width:186px;
+  pointer-events:none; box-shadow:0 2px 6px rgba(6,58,116,0.14); }
+.divchart-tooltip.is-hidden{ display:none; }
+.divchart-tooltip .ct-title{ font-size:12.5px; font-weight:700; color:var(--navy); margin-bottom:5px;
+  border-bottom:1px solid var(--border); padding-bottom:4px; }
+.divchart-tooltip .ct-row{ display:flex; justify-content:space-between; gap:14px; font-size:12px; padding:2px 0; }
+.divchart-tooltip .ct-row b{ font-family:var(--mono); font-weight:700; white-space:nowrap; }
+
+.chart-badge{ white-space:nowrap; max-width:none; }
+.chart-badge.align-right{ transform:translate(-100%,-100%); }
+.divchart-tooltip.align-right{ transform:translate(-100%,-100%); }
+.divchart-tooltip.align-left{ transform:translate(0,-100%); }
+
+.chart-badge{ width:max-content; border-radius:2px; background:#fff; border:1px solid var(--rule); }
+.divchart-tooltip{ width:max-content; }
+
+/* --- 교과별 부족 목록: 개수와 무관하게 패널 높이 고정 --- */
+.col-4 > .panel:last-child{ min-height:0; }
+.topn-list{ overflow-y:auto; max-height:216px; padding-right:4px; }
+.topn-list::-webkit-scrollbar{ width:8px; }
+.topn-list::-webkit-scrollbar-thumb{ background:#b1b8be; }
+.topn-list::-webkit-scrollbar-track{ background:#eceff2; }
+.col-4 > .panel:last-child{ display:flex; flex-direction:column; }
+.topn-list{ height:140px; min-height:140px; max-height:140px; }
+
+.topn-list .topn-empty{ display:flex; align-items:center; justify-content:center; text-align:center;
+  height:100%; margin:0; padding:0 10px; color:var(--ink-muted); font-size:12.5px; }
