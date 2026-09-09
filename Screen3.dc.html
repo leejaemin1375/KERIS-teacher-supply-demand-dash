@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>3. 기간제·신규·저경력 배치 현황 · 교원 배치·수급 통합 대시보드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="screen3.css?v=5">
+<script src="geo.js?v=5"></script>
+<script src="screen3-data.js?v=5"></script>
+<style>
+html,body{margin:0;padding:0;}
+a{color:#063a74;text-decoration:none;} a:hover{color:#1c589c;}
+*{box-sizing:border-box;}
+</style>
+</helmet>
+<div class="app">
+  <div class="sidebar">
+    <div class="gov-banner">교육부 · 한국교육학술정보원 KERIS</div>
+    <div class="brand">
+      <div class="brand-title">교원 배치·수급 통합 대시보드</div>
+      <div class="brand-sub">전국 17개 시도 기준</div>
+    </div>
+    <div class="nav">
+      <a class="nav-item" href="Screen1.dc.html"><span class="nstep">1</span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="4" height="10"/><rect x="10" y="6" width="4" height="14"/><rect x="17" y="3" width="4" height="17"/></svg>
+        교원 배치 현황 진단
+      </a>
+      <a class="nav-item" href="Screen2.dc.html"><span class="nstep">2</span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-9"/><path d="M15 6h6v6"/></svg>
+        중장기 교원 수급 예측
+      </a>
+      <a class="nav-item active" href="Screen3.dc.html"><span class="nstep">3</span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>
+        기간제·신규·저경력 배치 분석
+      </a>
+    </div>
+    <div class="side-foot">EARLY_CAREER_TEMP_PLACEMENT<br/>대응 과제: 10번 수요조사서</div>
+  </div>
+
+  <div class="content">
+    <div class="page-title-row">
+      <div class="page-title">기간제·신규·저경력 교사 배치 분석</div>
+      <div class="data-asof">데이터 기준 : {{dataAsof}}</div>
+      <div class="info-wrap">
+        <button class="info-icon">i</button>
+        <div class="info-popover">
+          <div class="info-popover-title">{{infoTitle}}</div>
+          <ul>
+            <sc-for list="{{infoLines}}" as="l" hint-placeholder-count="4"><li>{{l}}</li></sc-for>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="page-sub">{{pageSub}}</div>
+    <div class="disclaimer">※ 현재 화면의 수치는 UI 검토를 위한 예시 데이터입니다. 실제 연동 시 교데통 데이터로 대체됩니다.</div>
+
+    <div class="top-tabs">
+      <sc-for list="{{topTabs}}" as="t" hint-placeholder-count="2">
+        <button class="top-tab-btn {{t.activeClass}}" onClick="{{t.onClick}}">{{t.label}}</button>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{isDiagnosis}}" hint-placeholder-val="{{true}}">
+    <div class="panel filter-panel">
+      <div class="filter-bar">
+        <div class="filter-item"><label>시도</label>
+          <select value="{{region}}" onChange="{{onChangeRegion}}"><sc-for list="{{regionOptions}}" as="o" hint-placeholder-count="18"><option value="{{o}}">{{o}}</option></sc-for></select>
+        </div>
+        <div class="filter-item"><label>교육지원청</label>
+          <select value="{{district}}" onChange="{{onChangeDistrict}}" disabled="{{districtDisabled}}"><sc-for list="{{districtOptions}}" as="o" hint-placeholder-count="5"><option value="{{o}}">{{o}}</option></sc-for></select>
+        </div>
+        <div class="filter-item"><label>학교급</label>
+          <select value="{{level}}" onChange="{{onChangeLevel}}"><sc-for list="{{levelOptions}}" as="o" hint-placeholder-count="4"><option value="{{o}}">{{o}}</option></sc-for></select>
+        </div>
+        <div class="filter-reset-item">
+          <button class="icon-reset" onClick="{{onReset}}" title="필터 초기화" aria-label="필터 초기화">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="grid-row" style="flex:0 0 auto; margin-bottom:11px;">
+      <div class="panel">
+        <div class="panel-head-row">
+          <div class="panel-title">지역 × 학교규모별 교사 집중도</div>
+          <div class="metric-toggle">
+            <sc-for list="{{heatMetrics}}" as="m" hint-placeholder-count="4">
+              <button class="metric-btn {{m.activeClass}}" onClick="{{m.onClick}}">{{m.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div class="panel-sub">{{heatScopeLabel}} · {{heatMetricLabel}} 기준 · 열 제목 클릭 시 하위 단계로 드릴다운</div>
+        <div class="heatmap-scroll-x">
+          <div class="heatmap-wrap" style="grid-template-columns:{{heatGridTemplate}};">
+            <div></div>
+            <sc-for list="{{heatColHeads}}" as="c" hint-placeholder-count="17">
+              <button class="heat-colhead-btn" style="grid-column:{{c.col}}; grid-row:1;" onClick="{{c.onClick}}">{{c.name}}</button>
+            </sc-for>
+            <sc-for list="{{sizeRowHeads}}" as="r" hint-placeholder-count="3">
+              <div class="heat-rowhead" style="grid-column:1; grid-row:{{r.row}};">{{r.name}}</div>
+            </sc-for>
+            <sc-for list="{{heatCells}}" as="cell" hint-placeholder-count="51">
+              <div class="heat-cell" title="{{cell.title}}" style="grid-column:{{cell.col}}; grid-row:{{cell.row}}; background:{{cell.bg}}; color:{{cell.textColor}};">{{cell.label}}</div>
+            </sc-for>
+          </div>
+        </div>
+        <div class="legend-row">
+          <span>낮음</span>
+          <div class="legend-ramp"><sc-for list="{{legendSwatches}}" as="sw" hint-placeholder-count="6"><span style="background:{{sw}}"></span></sc-for></div>
+          <span>높음 ({{heatMetricLabel}})</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid12 grid-row" style="flex:1;">
+      <div class="col-6">
+        <div class="panel" style="flex:0.82;">
+          <div class="panel-head-row">
+            <div class="panel-title">기피학교 vs 선호학교 교원 구성비
+              <div class="info-inline">
+                <button class="info-icon">i</button>
+                <div class="info-popover">
+                  <div class="info-popover-title">기피·선호 분류 기준</div>
+                  <ul>
+                    <li>도서벽지 지수(원거리·소규모·정원충원 곤란도 등)를 종합해 상위 약 40%를 기피학교군, 하위 약 40%를 선호학교군으로 예시 분류합니다.</li>
+                    <li>실제 연동 시 정원 충원율·희망 배치 순위 등 교데통 지표로 대체될 예정입니다.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel-sub">{{heatScopeLabel}} 내 {{avoidPreferCount}}개 단위 비교 · 100% 기준</div>
+          <div class="stack-area">
+            <div>
+              <div class="stack-row-head"><span>기피학교군</span><span class="n">{{avoidGroup.n}}개 단위 평균</span></div>
+              <div class="stack-track">
+                <div class="stack-seg" style="width:{{avoidGroup.contractPct}}%; background:#1c589c;">{{avoidGroup.contractText}}</div>
+                <div class="stack-seg" style="width:{{avoidGroup.newPct}}%; background:#9e6a00;">{{avoidGroup.newText}}</div>
+                <div class="stack-seg" style="width:{{avoidGroup.earlyPct}}%; background:#3fa654;">{{avoidGroup.earlyText}}</div>
+                <div class="stack-seg" style="width:{{avoidGroup.veteranPct}}%; background:#063a74;">{{avoidGroup.veteranText}}</div>
+              </div>
+            </div>
+            <div>
+              <div class="stack-row-head"><span>선호학교군</span><span class="n">{{preferGroup.n}}개 단위 평균</span></div>
+              <div class="stack-track">
+                <div class="stack-seg" style="width:{{preferGroup.contractPct}}%; background:#1c589c;">{{preferGroup.contractText}}</div>
+                <div class="stack-seg" style="width:{{preferGroup.newPct}}%; background:#9e6a00;">{{preferGroup.newText}}</div>
+                <div class="stack-seg" style="width:{{preferGroup.earlyPct}}%; background:#3fa654;">{{preferGroup.earlyText}}</div>
+                <div class="stack-seg" style="width:{{preferGroup.veteranPct}}%; background:#063a74;">{{preferGroup.veteranText}}</div>
+              </div>
+            </div>
+          </div>
+          <div class="stack-legend">
+            <div class="stack-legend-item"><span class="stack-legend-dot" style="background:#1c589c"></span>기간제</div>
+            <div class="stack-legend-item"><span class="stack-legend-dot" style="background:#9e6a00"></span>신규</div>
+            <div class="stack-legend-item"><span class="stack-legend-dot" style="background:#3fa654"></span>저경력(신규 제외)</div>
+            <div class="stack-legend-item"><span class="stack-legend-dot" style="background:#063a74"></span>경력교사</div>
+          </div>
+        </div>
+        <div class="panel" style="flex:1.18;">
+          <div class="panel-title">신규·저경력 업무과부하 비교</div>
+          <div class="panel-sub">경력교사 지표 대비 신규·저경력교사의 업무 부담 · {{heatScopeLabel}}</div>
+          <div class="cmp-table-wrap">
+            <table class="cmp-table">
+              <thead><tr><th>구분</th><th>신규교사</th><th>저경력교사</th><th>경력교사</th></tr></thead>
+              <tbody>
+                <sc-for list="{{cmpRows}}" as="row" hint-placeholder-count="4">
+                  <tr>
+                    <td>{{row.label}}</td>
+                    <td class="{{row.newClass}}">{{row.newVal}}</td>
+                    <td class="{{row.earlyClass}}">{{row.earlyVal}}</td>
+                    <td class="lo">{{row.baseVal}}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="panel">
+          <div class="panel-head-row">
+            <div class="panel-title">조기전출 및 기간제 구인난 현황</div>
+            <div class="pill-toggle">
+              <sc-for list="{{gapMetrics}}" as="g" hint-placeholder-count="2">
+                <button class="pill-btn {{g.activeClass}}" onClick="{{g.onClick}}">{{g.label}}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div class="panel-sub">{{heatScopeLabel}} · {{gapMetricLabel}} 기준 내림차순</div>
+          <div class="topn-list">
+            <sc-for list="{{gapItems}}" as="r" hint-placeholder-count="17">
+              <div class="topn-row">
+                <div class="topn-label">{{r.name}}</div>
+                <div class="topn-track"><div class="topn-fill" style="{{r.style}}"></div></div>
+                <div class="topn-value">{{r.valueText}}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{isSimulation}}" hint-placeholder-val="{{false}}">
+    <div class="panel filter-panel">
+      <div class="filter-bar">
+        <div class="filter-item"><label>시도</label>
+          <select value="{{region}}" onChange="{{onChangeRegion}}"><sc-for list="{{regionOptions}}" as="o" hint-placeholder-count="18"><option value="{{o}}">{{o}}</option></sc-for></select>
+        </div>
+        <div class="filter-item"><label>교육지원청</label>
+          <select value="{{district}}" onChange="{{onChangeDistrict}}" disabled="{{districtDisabled}}"><sc-for list="{{districtOptions}}" as="o" hint-placeholder-count="5"><option value="{{o}}">{{o}}</option></sc-for></select>
+        </div>
+        <div class="filter-item"><label>학교급</label>
+          <select value="{{level}}" onChange="{{onChangeLevel}}"><sc-for list="{{levelOptions}}" as="o" hint-placeholder-count="4"><option value="{{o}}">{{o}}</option></sc-for></select>
+        </div>
+        <button class="icon-reset" onClick="{{onReset}}" title="필터 초기화" aria-label="필터 초기화">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+        </button>
+        <div class="filter-divider"></div>
+        <div class="filter-item filter-slider-item">
+          <label>신규·저경력 비율 상한 <span class="filter-slider-current">{{capThreshold}}%</span></label>
+          <div class="slider-row-inline">
+            <span class="slider-tick-mini">10%</span>
+            <input class="slider-input slider-input-inline" type="range" min="10" max="60" step="1" value="{{capThreshold}}" onChange="{{onChangeCap}}"/>
+            <span class="slider-tick-mini">60%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-card-label">분석 대상 학교</div><div class="kpi-card-value">{{sim.totalSchools}}<span class="unit">개</span></div></div>
+      <div class="kpi-card"><div class="kpi-card-label">상한 초과 학교</div><div class="kpi-card-value">{{sim.overSchools}}<span class="unit">개</span></div></div>
+      <div class="kpi-card"><div class="kpi-card-label">상한 초과 학교 비율</div><div class="kpi-card-value">{{sim.overRate}}<span class="unit">%</span></div></div>
+      <div class="kpi-card"><div class="kpi-card-label">조정 필요 교원</div><div class="kpi-card-value">{{sim.adjustHeadcount}}<span class="unit">명</span></div></div>
+    </div>
+
+    <div class="grid-row-fixed">
+      <div class="panel">
+        <div class="panel-title">학교 규모별 상한 적용 영향</div>
+        <div class="panel-sub">{{heatScopeLabel}} · 현재 상한 {{capThreshold}}% 기준 · 소규모/중규모/대규모 학교의 초과 현황과 조정 필요 교원 비교</div>
+        <div class="cmp-table-wrap">
+          <table class="cmp-table">
+            <thead><tr><th>학교 규모</th><th>분석 대상 학교</th><th>상한 초과 학교</th><th>초과 학교 비율</th><th>조정 필요 교원</th></tr></thead>
+            <tbody>
+              <sc-for list="{{sizeImpact}}" as="s" hint-placeholder-count="3">
+                <tr>
+                  <td>{{s.name}}</td>
+                  <td>{{s.totalText}}</td>
+                  <td>{{s.overText}}</td>
+                  <td class="{{s.rateClass}}">{{s.rateText}}</td>
+                  <td class="{{s.adjustClass}}">{{s.adjustText}}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid12 grid-row" style="flex:1; margin-top:11px;">
+      <div class="col-6">
+        <div class="panel">
+          <div class="panel-title">지역별 상한 초과 현황</div>
+          <div class="drill-crumb">
+            <button onClick="{{onDrillNational}}">전국</button>
+            <sc-if value="{{regionSelected}}" hint-placeholder-val="{{false}}"><span>›</span><button onClick="{{onDrillRegion}}">{{region}}</button></sc-if>
+            <sc-if value="{{districtSelected}}" hint-placeholder-val="{{false}}"><span>›</span><span class="cur">{{districtShort}}</span></sc-if>
+          </div>
+          <div class="panel-sub">상한 초과 학교 비율 기준 · 지도를 클릭하면 하위 단계로 이동합니다</div>
+          <div class="map-area">
+            <div class="map-svg-wrap">
+              <svg class="map-svg" viewBox="{{mapViewBox}}" xmlns="http://www.w3.org/2000/svg">
+                <sc-for list="{{mapPaths}}" as="p" hint-placeholder-count="17">
+                  <path d="{{p.d}}" fill="{{p.fill}}" class="{{p.cls}}" onClick="{{p.onClick}}" onMouseEnter="{{p.onEnter}}" onMouseLeave="{{p.onLeave}}"><title>{{p.title}}</title></path>
+                </sc-for>
+              </svg>
+            </div>
+            <div class="map-detail">
+              <sc-if value="{{hoverActive}}" hint-placeholder-val="{{false}}">
+                <div class="hc-title">{{hover.name}}</div>
+                <div class="hc-row hc-main"><span>{{hover.mainLabel}}</span><b>{{hover.mainValue}}</b></div>
+                <div class="hc-div"></div>
+                <sc-for list="{{hover.rows}}" as="r" hint-placeholder-count="3">
+                  <div class="hc-row"><span>{{r.label}}</span><b>{{r.value}}</b></div>
+                </sc-for>
+              </sc-if>
+              <sc-if value="{{hoverInactive}}" hint-placeholder-val="{{true}}">
+                <div class="hc-hint">지역에 마우스를 올리면 상한 초과 상세 정보를 확인할 수 있습니다.</div>
+              </sc-if>
+            </div>
+          </div>
+          <div class="legend-row">
+            <span>{{legendMin}}</span>
+            <div class="legend-ramp"><sc-for list="{{legendSwatches}}" as="sw" hint-placeholder-count="6"><span style="background:{{sw}}"></span></sc-for></div>
+            <span>{{legendMax}}</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="panel">
+          <div class="panel-head-row">
+            <div class="panel-title">조정 필요 규모
+              <div class="info-inline">
+                <button class="info-icon">i</button>
+                <div class="info-popover">
+                  <div class="info-popover-title">시뮬레이션 안내</div>
+                  <ul>
+                    <li>상한을 초과하는 학교의 초과분을 상한선까지 낮추는 데 필요한 조정 교원 수를 단위별로 합산한 예시 값입니다.</li>
+                    <li>실제 조정 대상 학교는 정원·전보 규정 등을 함께 고려해 별도로 결정되어야 합니다.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel-sub">{{heatScopeLabel}} · 조정 필요 교원 내림차순</div>
+          <div class="topn-list">
+            <sc-for list="{{adjustItems}}" as="r" hint-placeholder-count="17">
+              <div class="topn-row">
+                <div class="topn-label">{{r.name}}</div>
+                <div class="topn-track"><div class="topn-fill" style="{{r.style}}"></div></div>
+                <div class="topn-value">{{r.valueText}}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <div class="page-foot">
+      <span><b>교원 배치·수급 통합 대시보드</b> · 한국교육학술정보원(KERIS)</span>
+      <span>지도 경계 : 통계청 행정구역(2018) · 본 화면의 수치는 UI 검토용 예시 데이터</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.state = {
+      subScreen: 'diagnosis', region: '전체', district: '전체', level: '전체',
+      heatMetric: 'total', gapMetric: 'transfer', capThreshold: 30, hoverKey: ''
+    };
+  }
+
+  componentDidMount(){
+    var self = this;
+    this._navHandler = function(e){
+      var t = e.target;
+      var a = (t && t.closest) ? t.closest('a[href]') : null;
+      if (!a) return;
+      var h = a.getAttribute('href') || '';
+      if (h.indexOf('.dc.html') === -1 || h.indexOf('?') !== -1) return;
+      e.preventDefault();
+      window.location.href = h + (window.location.search || '');
+    };
+    document.addEventListener('click', this._navHandler, true);
+  }
+
+  componentWillUnmount(){
+    if (this._navHandler) document.removeEventListener('click', this._navHandler, true);
+    if (this._waitTimer) clearInterval(this._waitTimer);
+  }
+
+  renderVals(){
+    if (!window.GEO || !window.__DCDATA_READY) {
+      if (!this._waitTimer) {
+        var c = this;
+        this._waitTimer = setInterval(function(){
+          if (window.GEO && window.__DCDATA_READY) { clearInterval(c._waitTimer); c._waitTimer = 0; c.forceUpdate(); }
+        }, 40);
+      }
+      return {};
+    }
+    var self = this;
+    var st = this.state;
+
+    // ---------------- drill context (same structure as Screen 1/2) ----------------
+    var atNational = st.region === '전체';
+    var atOffice = !atNational && st.district !== '전체';
+    var drillList = atNational ? PROVINCES : officesOf(st.region);
+    var districtOptions = atNational ? ['전체'] : ['전체'].concat(officesOf(st.region));
+    var scopeList = atOffice ? [st.district] : drillList;
+
+    function shortNameOf(name){
+      if (atNational) return provShort(name);
+      var stripped = name.indexOf(st.region) === 0 ? name.slice(st.region.length) : name;
+      return officeShortName(stripped);
+    }
+
+    // ---------------- concentration formulas: mutually-exclusive buckets so 종합 = 신규+저경력+기간제 exactly ----------------
+    function biasFor(name){
+      return atNational ? (REMOTE_BIAS[name] || 0) : ((REMOTE_BIAS[st.region] || 0) + (seedRand(name + 'offbias') - 0.5) * 16);
+    }
+    function remoteIdx(name){
+      var lb = LEVEL_BIAS[st.level] || 0;
+      return clamp(50 + biasFor(name) + lb + (seedRand(name + 'rr') - 0.5) * 16, 5, 95);
+    }
+    function ratesFor(name, sizeAdj){
+      var r = remoteIdx(name);
+      var sa = sizeAdj || 0;
+      var seed = name + sa;
+      var contract = clamp(8 + r * 0.14 + sa * 0.3 + (seedRand(seed + 'c') - 0.5) * 6, 3, SCALE.contract);
+      var newR = clamp(6 + r * 0.09 + sa * 0.2 + (seedRand(seed + 'n') - 0.5) * 4, 2, SCALE.new);
+      var early = clamp(6 + r * 0.10 + sa * 0.22 + (seedRand(seed + 'e') - 0.5) * 4, 2, SCALE.early);
+      var total = contract + newR + early;
+      var veteran = 100 - total;
+      return { contract: contract, new: newR, early: early, total: total, veteran: veteran };
+    }
+    function valueFor(r, metric){ return metric === 'new' ? r.new : metric === 'early' ? r.early : metric === 'contract' ? r.contract : r.total; }
+
+    // ---------------- heatmap: rows = scopeList, cols = school size ----------------
+    var heatMetric = ['new', 'early', 'contract', 'total'].indexOf(st.heatMetric) !== -1 ? st.heatMetric : 'total';
+    var HEAT_METRIC_DEFS = [
+      { key: 'new', label: '신규' }, { key: 'early', label: '저경력' },
+      { key: 'contract', label: '기간제' }, { key: 'total', label: '종합' }
+    ];
+    var heatMetrics = HEAT_METRIC_DEFS.map(function(m){
+      return { label: m.label, activeClass: heatMetric === m.key ? 'active' : '', onClick: function(){ self.setState({ heatMetric: m.key }); } };
+    });
+    var heatMetricLabel = HEAT_METRIC_DEFS.filter(function(m){ return m.key === heatMetric; })[0].label + ' 집중도';
+
+    // columns = region/office (scopeList), rows = school size
+    var heatGridTemplate = '70px repeat(' + scopeList.length + ', minmax(38px, 1fr))';
+    var sizeRowHeads = SIZES3.map(function(s, i){ return { name: s, row: i + 2 }; });
+    var heatColHeads = scopeList.map(function(n, i){
+      return {
+        name: shortNameOf(n), col: i + 2,
+        onClick: atOffice ? function(){} : (atNational ? function(){ self.setState({ region: n, district: '전체' }); } : function(){ self.setState({ district: n }); })
+      };
+    });
+    var heatCells = [];
+    scopeList.forEach(function(n, ci){
+      SIZES3.forEach(function(sz, ri){
+        var r = ratesFor(n, SIZE_ADJ[sz]);
+        var v = valueFor(r, heatMetric);
+        var pct = clamp((v / SCALE[heatMetric]) * 100, 0, 100);
+        heatCells.push({
+          row: ri + 2, col: ci + 2, label: v.toFixed(0) + '%', bg: orangeColorOf(pct), textColor: orangeTextOf(pct),
+          title: shortNameOf(n) + ' · ' + sz + ' · ' + heatMetricLabel + ' ' + v.toFixed(1) + '%'
+        });
+      });
+    });
+    var heatScopeLabel = atOffice ? (provShort(st.region) + ' ' + officeShortName(st.district))
+      : (atNational ? '전국(시도별)' : provShort(st.region) + '(교육지원청별)');
+
+    // ---------------- 기피학교 vs 선호학교 구성비 ----------------
+    var sortedByRemote = scopeList.slice().sort(function(a, b){ return remoteIdx(b) - remoteIdx(a); });
+    var kTop = Math.max(1, Math.round(sortedByRemote.length * 0.4));
+    var avoidUnits = sortedByRemote.slice(0, kTop);
+    var preferUnits = sortedByRemote.slice(sortedByRemote.length - kTop);
+    function groupComposition(units){
+      var sum = { contract: 0, new: 0, early: 0, veteran: 0 };
+      units.forEach(function(n){
+        var r = ratesFor(n, 0);
+        sum.contract += r.contract; sum.new += r.new; sum.early += r.early; sum.veteran += r.veteran;
+      });
+      var k = units.length;
+      var contractPct = sum.contract / k, newPct = sum.new / k, earlyPct = sum.early / k, veteranPct = sum.veteran / k;
+      return {
+        n: k,
+        contractPct: contractPct, contractText: contractPct >= 8 ? contractPct.toFixed(0) + '%' : '',
+        newPct: newPct, newText: newPct >= 8 ? newPct.toFixed(0) + '%' : '',
+        earlyPct: earlyPct, earlyText: earlyPct >= 8 ? earlyPct.toFixed(0) + '%' : '',
+        veteranPct: veteranPct, veteranText: veteranPct >= 8 ? veteranPct.toFixed(0) + '%' : ''
+      };
+    }
+    var avoidGroup = groupComposition(avoidUnits);
+    var preferGroup = groupComposition(preferUnits);
+
+    // ---------------- 조기전출율 / 기간제 미채용 횟수 ----------------
+    function transferRate(name){ return clamp(5 + remoteIdx(name) * 0.18 + (seedRand(name + 'trf') - 0.5) * 6, 2, 30); }
+    function unfilledCount(name){ return Math.round(clamp(remoteIdx(name) * 0.06 + (seedRand(name + 'unf') - 0.5) * 3, 0, 9)); }
+    var gapMetric = st.gapMetric === 'unfilled' ? 'unfilled' : 'transfer';
+    var GAP_METRIC_DEFS = [{ key: 'transfer', label: '조기전출율' }, { key: 'unfilled', label: '기간제 미채용 횟수' }];
+    var gapMetrics = GAP_METRIC_DEFS.map(function(g){
+      return { label: g.label, activeClass: gapMetric === g.key ? 'active' : '', onClick: function(){ self.setState({ gapMetric: g.key }); } };
+    });
+    var gapMetricLabel = GAP_METRIC_DEFS.filter(function(g){ return g.key === gapMetric; })[0].label;
+    var gapRaw = scopeList.map(function(n){ return { name: n, v: gapMetric === 'unfilled' ? unfilledCount(n) : transferRate(n) }; })
+      .sort(function(a, b){ return b.v - a.v; });
+    var gapMax = gapRaw.length ? gapRaw[0].v : 1;
+    var gapItems = gapRaw.map(function(r){
+      var w = clamp((r.v / (gapMax || 1)) * 100, 6, 100);
+      return {
+        name: shortNameOf(r.name), style: 'width:' + w + '%; background:#3fa654;',
+        valueText: gapMetric === 'unfilled' ? (r.v + '회') : (r.v.toFixed(1) + '%')
+      };
+    });
+
+    // ---------------- 신규/저경력 업무과부하 비교표 ----------------
+    var avgRemote = scopeList.reduce(function(s, n){ return s + remoteIdx(n); }, 0) / scopeList.length;
+    var burden = clamp((avgRemote - 50) * 0.25, -8, 12);
+    var baseHours = 18.0, newHours = clamp(baseHours + 1.6 + burden * 0.05, 15, 24), earlyHours = clamp(baseHours + 0.9 + burden * 0.03, 15, 23);
+    var baseTasks = 3.0, newTasks = clamp(baseTasks + 1.3 + burden * 0.03, 2.5, 6.5), earlyTasks = clamp(baseTasks + 0.7 + burden * 0.02, 2.5, 5.5);
+    var baseAdmin = 22, newAdmin = clamp(baseAdmin + 13 + burden * 0.4, 18, 48), earlyAdmin = clamp(baseAdmin + 7 + burden * 0.25, 18, 40);
+    var baseIdx = 100, newIdx = clamp(baseIdx + 29 + burden, 105, 150), earlyIdx = clamp(baseIdx + 15 + burden * 0.6, 100, 135);
+    var cmpRows = [
+      { label: '주당 수업시수', newVal: newHours.toFixed(1) + '시간', earlyVal: earlyHours.toFixed(1) + '시간', baseVal: baseHours.toFixed(1) + '시간', newClass: 'hi', earlyClass: '' },
+      { label: '담당 업무 수', newVal: newTasks.toFixed(1) + '개', earlyVal: earlyTasks.toFixed(1) + '개', baseVal: baseTasks.toFixed(1) + '개', newClass: 'hi', earlyClass: '' },
+      { label: '행정업무 비중', newVal: newAdmin.toFixed(0) + '%', earlyVal: earlyAdmin.toFixed(0) + '%', baseVal: baseAdmin.toFixed(0) + '%', newClass: 'hi', earlyClass: '' },
+      { label: '업무부담지수(경력=100)', newVal: newIdx.toFixed(0), earlyVal: earlyIdx.toFixed(0), baseVal: baseIdx.toFixed(0), newClass: 'hi', earlyClass: 'hi' }
+    ];
+
+    // ---------------- 배치 시뮬레이션: 단위별 synthetic 학교 분포 (신규·저경력 교원 비율만 대상, 기간제 제외) ----------------
+    var capThreshold = clamp(parseInt(st.capThreshold, 10) || 30, 10, 60);
+    var SIZE_SHARE = { '대규모': 0.30, '중규모': 0.38, '소규모': 0.32 };
+    // moderate, fixed per-size shift applied once per school (not routed through ratesFor's own
+    // per-name noise, which would otherwise compound with SIZE_ADJ and produce unequal variance
+    // across sizes) — keeps 소규모 > 중규모 > 대규모 a smooth, natural gradient rather than a cliff
+    var SIZE_SHIFT = { '대규모': -9, '중규모': 0, '소규모': 9 };
+    var TEACHERS_RANGE = { '대규모': [22, 34], '중규모': [14, 22], '소규모': [8, 14] };
+    var schoolPool = scopeList.map(function(n){
+      var base = ratesFor(n, 0);
+      var careerBase = base.new + base.early; // 신규+저경력만; 기간제(base.contract)는 상한 산정 대상이 아님
+      var N = Math.round(14 + seedRand(n + 'nsch') * 40);
+      // fixed per-region split (not a per-school random roll) so each region contributes the
+      // same 대/중/소 proportions regardless of its remoteness — otherwise a weak string-hash
+      // RNG can spuriously correlate the size roll with a region's career-base level
+      var nLarge = Math.round(N * SIZE_SHARE['대규모']);
+      var nMid = Math.round(N * SIZE_SHARE['중규모']);
+      var schools = [];
+      for (var i = 0; i < N; i++){
+        var size = i < nLarge ? '대규모' : (i < nLarge + nMid ? '중규모' : '소규모');
+        var conc = clamp(careerBase + SIZE_SHIFT[size] + (mixRand(n + i + 'sc') - 0.5) * 32, 2, 90);
+        var tr = TEACHERS_RANGE[size];
+        var teachers = Math.round(tr[0] + mixRand(n + i + 'tps') * (tr[1] - tr[0]));
+        schools.push({ size: size, teachers: teachers, conc: conc });
+      }
+      return { name: n, N: N, schools: schools };
+    });
+
+    function evalAtCap(cap){
+      var totSchools = 0, totOver = 0, totAdjust = 0;
+      var perUnit = schoolPool.map(function(u){
+        var over = 0, adjust = 0;
+        u.schools.forEach(function(s){
+          if (s.conc > cap){ over++; adjust += Math.round((s.conc - cap) / 100 * s.teachers); }
+        });
+        totSchools += u.N; totOver += over; totAdjust += adjust;
+        return { name: u.name, N: u.N, over: over, adjust: adjust, overRate: u.N ? (over / u.N) * 100 : 0 };
+      });
+      return { totalSchools: totSchools, totalOver: totOver, totalAdjust: totAdjust, overRate: totSchools ? (totOver / totSchools) * 100 : 0, perUnit: perUnit };
+    }
+
+    function evalBySize(cap){
+      var agg = {};
+      SIZES3.forEach(function(sz){ agg[sz] = { total: 0, over: 0, adjust: 0 }; });
+      schoolPool.forEach(function(u){
+        u.schools.forEach(function(s){
+          agg[s.size].total++;
+          if (s.conc > cap){ agg[s.size].over++; agg[s.size].adjust += Math.round((s.conc - cap) / 100 * s.teachers); }
+        });
+      });
+      return agg;
+    }
+
+    var mainSim = evalAtCap(capThreshold);
+    var sim = {
+      totalSchools: fmt0(mainSim.totalSchools), overSchools: fmt0(mainSim.totalOver),
+      overRate: fmt1(mainSim.overRate), adjustHeadcount: fmt0(mainSim.totalAdjust)
+    };
+
+    // adjust-needed ranking (조정 필요 규모 순위)
+    var adjustSorted = mainSim.perUnit.slice().sort(function(a, b){ return b.adjust - a.adjust; });
+    var maxAdjust = adjustSorted.length ? adjustSorted[0].adjust : 1;
+    var adjustItems = adjustSorted.map(function(u){
+      var w = clamp((u.adjust / (maxAdjust || 1)) * 100, 4, 100);
+      return { name: shortNameOf(u.name), style: 'width:' + w + '%; background:#063a74;', valueText: u.adjust + '명' };
+    });
+
+    // 학교 규모별 상한 적용 영향: 현재 상한(capThreshold) 기준으로 소/중/대규모 학교를 집계 (비교표, 차트 아님)
+    var SIZE_TABLE_ORDER = ['소규모', '중규모', '대규모'];
+    var sizeAgg = evalBySize(capThreshold);
+    var sizeRates = SIZE_TABLE_ORDER.map(function(sz){
+      var a = sizeAgg[sz];
+      return { size: sz, total: a.total, over: a.over, adjust: a.adjust, rate: a.total ? (a.over / a.total) * 100 : 0 };
+    });
+    var maxSizeRate = Math.max.apply(null, sizeRates.map(function(s){ return s.rate; }).concat([0]));
+    var maxSizeAdjust = Math.max.apply(null, sizeRates.map(function(s){ return s.adjust; }).concat([0]));
+    var sizeImpact = sizeRates.map(function(s){
+      return {
+        name: s.size, totalText: fmt0(s.total) + '개', overText: fmt0(s.over) + '개',
+        rateText: fmt1(s.rate) + '%', rateClass: (maxSizeRate > 0 && s.rate === maxSizeRate) ? 'hi' : '',
+        adjustText: fmt0(s.adjust) + '명', adjustClass: (maxSizeAdjust > 0 && s.adjust === maxSizeAdjust) ? 'hi' : ''
+      };
+    });
+
+    // ---------------- simulation map (choropleth, sequential ramp on overRate) ----------------
+    var unitSimByName = {}; mainSim.perUnit.forEach(function(u){ unitSimByName[u.name] = u; });
+    var mapPaths = [];
+    if (atNational) {
+      PROVINCES.forEach(function(name){
+        var u = unitSimByName[name];
+        var isSel = name === st.region, isHover = st.hoverKey === name;
+        var geo = window.GEO.provinces[name];
+        mapPaths.push({
+          d: geo.d, fill: orangeColorOf(u.overRate), cls: (isSel ? 'is-selected ' : '') + (isHover ? 'is-hover' : ''),
+          title: name + ' · 상한 초과 학교 비율 ' + fmt1(u.overRate) + '%',
+          onClick: function(){ self.setState({ region: name, district: '전체', hoverKey: '' }); },
+          onEnter: function(){ self.setState({ hoverKey: name }); },
+          onLeave: function(){ self.setState({ hoverKey: '' }); }
+        });
+      });
+    } else {
+      (window.GEO.offices[st.region] || []).forEach(function(o){
+        var u = unitSimByName[o.office] || { overRate: 0, over: 0, adjust: 0, N: 0 };
+        var isSel = o.office === st.district, isHover = st.hoverKey === o.office;
+        mapPaths.push({
+          d: o.d, fill: orangeColorOf(u.overRate), cls: (isSel ? 'is-selected ' : '') + (isHover ? 'is-hover' : ''),
+          title: o.office + ' · 상한 초과 학교 비율 ' + fmt1(u.overRate) + '%',
+          onClick: function(){ self.setState({ district: o.office, hoverKey: '' }); },
+          onEnter: function(){ self.setState({ hoverKey: o.office }); },
+          onLeave: function(){ self.setState({ hoverKey: '' }); }
+        });
+      });
+    }
+    var NATIONAL_VIEWBOX_TIGHT = '-6 -10 672 632';
+    var mapViewBox = atNational ? NATIONAL_VIEWBOX_TIGHT : (window.GEO.provinces[st.region].bbox || [0, 0, 660, 760]).join(' ');
+    // detail panel: live mouse hover takes priority; once at office level, a clicked/selected
+    // office (st.district) keeps showing its detail after the mouse leaves, instead of falling
+    // back to the empty hint
+    var detailKey = st.hoverKey || (atOffice ? st.district : '');
+    var hoverActive = !!detailKey && drillList.indexOf(detailKey) !== -1;
+    var hover = { name: '', mainLabel: '', mainValue: '', rows: [] };
+    if (hoverActive) {
+      var hu = unitSimByName[detailKey] || { overRate: 0, over: 0, adjust: 0, N: 0 };
+      hover = {
+        name: detailKey, mainLabel: '상한 초과 학교 비율', mainValue: fmt1(hu.overRate) + '%',
+        rows: [
+          { label: '분석 대상 학교 수', value: hu.N + '개교' },
+          { label: '상한 초과 학교 수', value: hu.over + '개교' },
+          { label: '조정 필요 교원 수', value: hu.adjust + '명' }
+        ]
+      };
+    }
+
+    // ---------------- tab / common ----------------
+    var TOP_TABS = [{ key: 'diagnosis', label: '현황 진단' }, { key: 'simulation', label: '배치 시뮬레이션' }];
+    var subScreen = st.subScreen === 'simulation' ? 'simulation' : 'diagnosis';
+    var topTabs = TOP_TABS.map(function(t){
+      return { label: t.label, activeClass: subScreen === t.key ? 'active' : '', onClick: function(){ self.setState({ subScreen: t.key }); } };
+    });
+    var isDiagnosis = subScreen === 'diagnosis', isSimulation = subScreen === 'simulation';
+    var infoTitle = isDiagnosis ? '집중도 지표 안내' : '시뮬레이션 안내';
+    var infoLines = isDiagnosis ? [
+      '집중도는 전체 교원 중 신규(1년차)·저경력(2~3년차, 신규 제외)·기간제 교원이 차지하는 비율입니다.',
+      '종합 지표는 세 항목의 합으로, 한 학교/지역에 비정규·저경력 인력이 얼마나 몰려 있는지를 나타냅니다.',
+      '기피·선호 학교군, 조기전출율 등은 UI 검토를 위한 예시 산식으로 산출되었습니다.'
+    ] : [
+      '상한 기준(%)은 학교 단위 신규·저경력 교원 비율의 권장 상한선이며, 기간제교사는 상한 산정 대상에 포함되지 않습니다.',
+      '상한을 초과하는 학교는 초과분만큼 조정(전보·신규배치 등)이 필요한 것으로 가정합니다.',
+      '조정 필요 교원, 지역별 초과 현황, 학교 규모별 상한 적용 영향은 예시 산식에 기반한 시뮬레이션 결과입니다.',
+      '상한 초과 교원의 실제 재배치 위치는 별도 기준으로 결정되므로, 적용 후 학교별·지역별 비율은 별도로 산출하지 않습니다.'
+    ];
+    var pageSub = isDiagnosis
+      ? '지역·학교 규모별로 기간제·신규·저경력 교사가 어디에 집중되어 있는지 진단하고 경력교사와 비교합니다.'
+      : '신규·저경력 교원 비율 상한 기준을 조정하여 기준 초과 학교와 조정 필요 규모를 시뮬레이션합니다.';
+
+    return {
+      dataAsof: DATA_ASOF, infoTitle: infoTitle, infoLines: infoLines, pageSub: pageSub,
+      topTabs: topTabs, isDiagnosis: isDiagnosis, isSimulation: isSimulation,
+
+      region: st.region, district: st.district, level: st.level,
+      regionOptions: ['전체'].concat(PROVINCES), districtOptions: districtOptions, districtDisabled: atNational,
+      levelOptions: LEVELS,
+      onChangeRegion: function(e){ self.setState({ region: e.target.value, district: '전체', hoverKey: '' }); },
+      onChangeDistrict: function(e){ self.setState({ district: e.target.value, hoverKey: '' }); },
+      onChangeLevel: function(e){ self.setState({ level: e.target.value }); },
+      onReset: function(){ self.setState({ region: '전체', district: '전체', level: '전체', heatMetric: 'total', gapMetric: 'transfer', capThreshold: 30, hoverKey: '' }); },
+
+      heatMetrics: heatMetrics, heatMetricLabel: heatMetricLabel, heatScopeLabel: heatScopeLabel,
+      heatGridTemplate: heatGridTemplate, heatColHeads: heatColHeads, sizeRowHeads: sizeRowHeads, heatCells: heatCells,
+      legendSwatches: ORANGE_SEQ,
+      avoidPreferCount: scopeList.length, avoidGroup: avoidGroup, preferGroup: preferGroup,
+      gapMetrics: gapMetrics, gapMetricLabel: gapMetricLabel, gapItems: gapItems,
+      cmpRows: cmpRows,
+
+      capThreshold: capThreshold, onChangeCap: function(e){ self.setState({ capThreshold: parseInt(e.target.value, 10) }); },
+      sim: sim,
+      regionSelected: !atNational, districtSelected: atOffice, districtShort: atOffice ? officeShortName(st.district) : '',
+      onDrillNational: function(){ self.setState({ region: '전체', district: '전체', hoverKey: '' }); },
+      onDrillRegion: function(){ self.setState({ district: '전체', hoverKey: '' }); },
+      mapPaths: mapPaths, mapViewBox: mapViewBox,
+      hoverActive: hoverActive, hoverInactive: !hoverActive, hover: hover,
+      legendMin: '초과 0%', legendMax: '초과 높음',
+      adjustItems: adjustItems, sizeImpact: sizeImpact
+    };
+  }
+}
+</script>
+</body>
+</html>

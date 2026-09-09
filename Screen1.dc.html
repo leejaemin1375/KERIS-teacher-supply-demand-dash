@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>1. 교원 배치 현황 진단 · 교원 배치·수급 통합 대시보드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="screen1.css?v=5">
+<script src="geo.js?v=5"></script>
+<script src="screen1-data.js?v=5"></script>
+<style>
+html,body{margin:0;padding:0;}
+a{color:#063a74;text-decoration:none;} a:hover{color:#1c589c;}
+*{box-sizing:border-box;}
+</style>
+</helmet>
+<div class="app">
+  <div class="sidebar">
+    <div class="gov-banner">교육부 · 한국교육학술정보원 KERIS</div>
+    <div class="brand">
+      <div class="brand-title">교원 배치·수급 통합 대시보드</div>
+      <div class="brand-sub">전국 17개 시도 기준</div>
+    </div>
+    <div class="nav">
+      <a class="nav-item active" href="Screen1.dc.html"><span class="nstep">1</span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="4" height="10"/><rect x="10" y="6" width="4" height="14"/><rect x="17" y="3" width="4" height="17"/></svg>
+        교원 배치 현황 진단
+      </a>
+      <a class="nav-item" href="Screen2.dc.html"><span class="nstep">2</span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-9"/><path d="M15 6h6v6"/></svg>
+        중장기 교원 수급 예측
+      </a>
+      <a class="nav-item" href="Screen3.dc.html"><span class="nstep">3</span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>
+        기간제·신규·저경력 배치 현황
+      </a>
+    </div>
+    <div class="side-foot">DEPLOYMENT_STATUS<br/>대응 과제: 8번 수요조사서<br/>지도: 통계청 행정구역 경계(2018)</div>
+  </div>
+
+  <div class="content">
+    <div class="page-title-row">
+      <div class="page-title">교원 배치 현황 진단</div>
+      <div class="data-asof">데이터 기준 : {{dataAsof}}</div>
+    </div>
+    <div class="disclaimer">※ 현재 화면의 수치는 UI 검토를 위한 예시 데이터입니다. (지역·교육지원청·교과 명칭은 실제 행정 명칭이며, 교원수·학생수 등 수치만 예시입니다)</div>
+
+    <div class="top-tabs">
+      <sc-for list="{{topTabs}}" as="t" hint-placeholder-count="2">
+        <button class="top-tab-btn {{t.activeClass}}" onClick="{{t.onClick}}">{{t.label}}</button>
+      </sc-for>
+    </div>
+
+    <div class="panel filter-panel">
+      <div class="filter-bar">
+        <div class="filter-item"><label>시도</label>
+          <select value="{{region}}" onChange="{{onChangeRegion}}"><sc-for list="{{regionOptions}}" as="o" hint-placeholder-count="18"><option value="{{o}}">{{o}}</option></sc-for></select>
+        </div>
+
+        <sc-if value="{{topTabIsMap}}" hint-placeholder-val="{{true}}">
+        <div class="filter-item"><label>교육지원청</label>
+          <select value="{{district}}" onChange="{{onChangeDistrict}}" disabled="{{districtDisabled}}"><sc-for list="{{districtOptions}}" as="o" hint-placeholder-count="5"><option value="{{o}}">{{o}}</option></sc-for></select>
+        </div>
+        </sc-if>
+        <sc-if value="{{topTabIsHeat}}" hint-placeholder-val="{{false}}">
+        <div class="filter-item ms-filter-item"><label>교육지원청</label>
+          <button class="ms-trigger" onClick="{{onToggleHeatDistrictOpen}}" disabled="{{districtDisabled}}">{{heatDistrictSummary}}</button>
+          <sc-if value="{{heatDistrictOpen}}" hint-placeholder-val="{{false}}">
+            <div class="ms-panel">
+              <sc-for list="{{heatDistrictChecklist}}" as="o" hint-placeholder-count="5">
+                <label class="ms-option"><input type="checkbox" checked="{{o.checked}}" onChange="{{o.onToggle}}"/>{{o.name}}</label>
+              </sc-for>
+              <div class="ms-panel-actions">
+                <button class="ms-clear" onClick="{{onClearHeatDistricts}}">전체 선택</button>
+                <button class="ms-close" onClick="{{onCloseHeatDropdowns}}">닫기</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+        </sc-if>
+
+        <div class="filter-item"><label>학교급</label>
+          <select value="{{level}}" onChange="{{onChangeLevel}}"><sc-for list="{{levelOptions}}" as="o" hint-placeholder-count="4"><option value="{{o}}">{{o}}</option></sc-for></select>
+        </div>
+
+        <sc-if value="{{topTabIsMap}}" hint-placeholder-val="{{true}}">
+        <div class="filter-item"><label>교과</label>
+          <select value="{{subject}}" onChange="{{onChangeSubject}}"><sc-for list="{{subjectOptions}}" as="o" hint-placeholder-count="20"><option value="{{o}}">{{o}}</option></sc-for></select>
+        </div>
+        </sc-if>
+        <sc-if value="{{topTabIsHeat}}" hint-placeholder-val="{{false}}">
+        <div class="filter-item ms-filter-item"><label>교과</label>
+          <button class="ms-trigger" onClick="{{onToggleHeatSubjectOpen}}">{{heatSubjectSummary}}</button>
+          <sc-if value="{{heatSubjectOpen}}" hint-placeholder-val="{{false}}">
+            <div class="ms-panel ms-panel-wide">
+              <sc-for list="{{heatSubjectChecklist}}" as="o" hint-placeholder-count="19">
+                <label class="ms-option"><input type="checkbox" checked="{{o.checked}}" onChange="{{o.onToggle}}"/>{{o.name}}</label>
+              </sc-for>
+              <div class="ms-panel-actions">
+                <button class="ms-clear" onClick="{{onClearHeatSubjects}}">전체 선택</button>
+                <button class="ms-close" onClick="{{onCloseHeatDropdowns}}">닫기</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+        </sc-if>
+
+        <div class="filter-reset-item">
+          <button class="icon-reset" onClick="{{onReset}}" title="필터 초기화" aria-label="필터 초기화">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <sc-if value="{{topTabIsMap}}" hint-placeholder-val="{{true}}">
+    <div class="grid12">
+      <div class="panel col-3 summary-panel">
+        <div class="sp-block">
+          <div class="sp-block-title">현재 선택 정보</div>
+          <div class="sel-title">{{selTitle}}</div>
+          <div class="sel-sub"><sc-for list="{{selSubLines}}" as="ln" hint-placeholder-count="4"><div>{{ln}}</div></sc-for></div>
+        </div>
+        <div class="sp-block">
+          <div class="sp-block-title">현재 핵심지표</div>
+          <div class="metric-label">{{heroLabel}}</div>
+          <div class="stat-hero">
+            <div class="stat-hero-value">{{heroValue}}<span class="unit">{{heroUnit}}</span></div>
+          </div>
+        </div>
+        <sc-if value="{{hasBaseline}}" hint-placeholder-val="{{false}}">
+        <div class="sp-block">
+          <div class="sp-block-title">비교정보</div>
+          <div class="stat-row"><span class="stat-row-label">{{baselineLabel}}</span><span class="stat-row-value">{{baselineValue}}</span></div>
+          <div class="stat-row"><span class="stat-row-label">평균 대비</span><span class="delta-badge {{deltaClass}}">{{deltaText}}</span></div>
+          <div class="stat-row"><span class="stat-row-label">{{rankLabel}}</span><span class="stat-row-value">{{rankText}}</span></div>
+        </div>
+        </sc-if>
+        <sc-if value="{{showCallouts}}" hint-placeholder-val="{{false}}">
+        <div class="sp-block">
+          <div class="sp-block-title">비교정보</div>
+          <div class="callout-block">
+            <div class="callout-title">{{calloutTitle}}</div>
+            <sc-for list="{{callouts}}" as="c" hint-placeholder-count="2">
+              <div class="callout-row"><span>{{c.rank}} {{c.name}}</span><b>{{c.value}}</b></div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+        <div class="sp-block">
+          <div class="sp-block-title">기본 규모 정보</div>
+          <sc-for list="{{basicRows}}" as="e" hint-placeholder-count="4">
+            <div class="stat-row"><span class="stat-row-label">{{e.label}}</span><span class="stat-row-value">{{e.value}}</span></div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div class="panel col-9">
+        <div class="map-head-row">
+          <div>
+            <div class="panel-title">지역별 교원 배치 현황</div>
+            <div class="drill-crumb">
+              <button onClick="{{onDrillNational}}">전국</button>
+              <sc-if value="{{regionSelected}}" hint-placeholder-val="{{false}}"><span>›</span><button onClick="{{onDrillRegion}}">{{region}}</button></sc-if>
+              <sc-if value="{{districtSelected}}" hint-placeholder-val="{{false}}"><span>›</span><span class="cur">{{districtShort}}</span></sc-if>
+            </div>
+          </div>
+          <div class="indicator-tabs">
+            <sc-for list="{{mapTabs}}" as="t" hint-placeholder-count="2">
+              <button class="ind-tab {{t.activeClass}}" onClick="{{t.onClick}}">{{t.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div class="panel-sub">지역별 교원 규모와 학생·학급 규모를 고려한 상대적 배치 수준을 확인합니다.</div>
+        <div class="map-area">
+          <div class="map-hover-card {{hoverVisClass}}">
+            <div class="hc-title">{{hover.name}}</div>
+            <div class="hc-row hc-main"><span>{{hover.mainLabel}}</span><b>{{hover.mainValue}}</b></div>
+            <div class="hc-div"></div>
+            <sc-for list="{{hover.rows}}" as="r" hint-placeholder-count="4">
+              <div class="hc-row"><span>{{r.label}}</span><b>{{r.value}}</b></div>
+            </sc-for>
+          </div>
+          <div class="map-svg-wrap">
+            <svg class="map-svg" viewBox="{{mapViewBox}}" xmlns="http://www.w3.org/2000/svg">
+              <sc-for list="{{mapPaths}}" as="p" hint-placeholder-count="17">
+                <path d="{{p.d}}" fill="{{p.fill}}" class="{{p.cls}}" onClick="{{p.onClick}}" onMouseEnter="{{p.onEnter}}" onMouseLeave="{{p.onLeave}}"><title>{{p.title}}</title></path>
+              </sc-for>
+            </svg>
+          </div>
+        </div>
+        <div class="legend-row">
+          <span>{{legendMin}}</span>
+          <div class="legend-ramp">
+            <sc-for list="{{legendSwatches}}" as="sw" hint-placeholder-count="6"><span style="background:{{sw}}"></span></sc-for>
+          </div>
+          <span>{{legendMax}}</span>
+        </div>
+        <sc-if value="{{showLevelNote}}" hint-placeholder-val="{{false}}">
+          <div class="level-note">※ 초등학교는 교과전담을 제외한 담임 중심 배치 구조로, 교과별 비교의 의미가 중·고등학교 대비 제한적입니다.</div>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{topTabIsHeat}}" hint-placeholder-val="{{false}}">
+    <div class="panel heat-panel-full">
+      <div class="map-head-row">
+        <div><div class="panel-title">지역 × 교과 배치 현황</div></div>
+        <div class="indicator-tabs">
+          <sc-for list="{{heatMetricTabs}}" as="t" hint-placeholder-count="2">
+            <button class="ind-tab {{t.activeClass}}" onClick="{{t.onClick}}">{{t.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div class="panel-sub">지역과 교과를 교차하여 교과교원의 배치 규모와 상대적 수준을 비교합니다.</div>
+      <div class="heatmap-scroll heatmap-scroll-full">
+        <table class="heatmap-table">
+          <thead>
+            <tr>
+              <th class="heat-corner">{{heatCornerLabel}}</th>
+              <sc-for list="{{heatColHeads}}" as="c" hint-placeholder-count="19">
+                <th class="heat-colhead {{c.selClass}}"><button onClick="{{c.onClick}}">{{c.name}}</button></th>
+              </sc-for>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{heatRows}}" as="row" hint-placeholder-count="17">
+              <tr>
+                <th class="heat-rowhead {{row.selClass}}"><button onClick="{{row.onClick}}">{{row.name}}</button></th>
+                <sc-for list="{{row.cells}}" as="cell" hint-placeholder-count="19">
+                  <td class="heat-cell {{cell.selClass}}"><button style="background:{{cell.bg}}; color:{{cell.textColor}};" title="{{cell.title}}" onClick="{{cell.onClick}}">{{cell.label}}</button></td>
+                </sc-for>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+      <div class="legend-row" style="justify-content:flex-start;">
+        <span>{{heatLegendMin}}</span>
+        <div class="legend-ramp">
+          <sc-for list="{{heatLegendSwatches}}" as="sw" hint-placeholder-count="6"><span style="background:{{sw}}"></span></sc-for>
+        </div>
+        <span>{{heatLegendMax}}</span>
+        <span style="margin-left:10px;">단위: {{heatUnitLabel}}</span>
+      </div>
+      <div class="heat-unit-note">※ 현재 조회 범위 내 상대적 수준 · 교육지원청·교과를 선택하면 선택한 항목만 표에 표시되며, 현재 선택 항목은 강조 표시됩니다</div>
+    </div>
+    </sc-if>
+
+    <div class="page-foot">
+      <span><b>교원 배치·수급 통합 대시보드</b> · 한국교육학술정보원(KERIS)</span>
+      <span>지도 경계 : 통계청 행정구역(2018) · 본 화면의 수치는 UI 검토용 예시 데이터</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.state = {
+      topTab: 'map', region: '전체', district: '전체', level: '전체', subject: '전체',
+      mapTab: 'count', heatMetric: 'count', hoverKey: '',
+      heatDistricts: [], heatSubjects: [], heatDistrictOpen: false, heatSubjectOpen: false
+    };
+  }
+
+  componentDidMount(){
+    var self = this;
+    this._navHandler = function(e){
+      var t = e.target;
+      var a = (t && t.closest) ? t.closest('a[href]') : null;
+      if (!a) return;
+      var h = a.getAttribute('href') || '';
+      if (h.indexOf('.dc.html') === -1 || h.indexOf('?') !== -1) return;
+      e.preventDefault();
+      window.location.href = h + (window.location.search || '');
+    };
+    document.addEventListener('click', this._navHandler, true);
+  }
+
+  componentWillUnmount(){
+    if (this._navHandler) document.removeEventListener('click', this._navHandler, true);
+    if (this._waitTimer) clearInterval(this._waitTimer);
+  }
+
+  renderVals(){
+    if (!window.GEO || !window.__DCDATA_READY) {
+      if (!this._waitTimer) {
+        var c = this;
+        this._waitTimer = setInterval(function(){
+          if (window.GEO && window.__DCDATA_READY) { clearInterval(c._waitTimer); c._waitTimer = 0; c.forceUpdate(); }
+        }, 40);
+      }
+      return {};
+    }
+    var self = this;
+    var st = this.state;
+
+    // ---------------- mock data model (context-free helpers first) ----------------
+    function ratioFor(prov, seedKey){
+      // student-teacher ratio varies with remoteness bias: remote areas tend to run smaller schools -> lower ratio
+      var rb = REMOTE_BIAS[prov] || 0;
+      var noise = (seedRand(seedKey + 'ratio' + LATEST_YEAR) - 0.5) * 1.1;
+      return clamp(STUDENT_TEACHER_RATIO - rb * 0.055 + noise, 8, 20);
+    }
+    function classSizeFor(prov){
+      var rb = REMOTE_BIAS[prov] || 0;
+      return clamp(CLASS_SIZE - rb * 0.03, 12, 28);
+    }
+    function provStudents(prov){
+      var lf = LEVEL_FACTOR[st.level] || 1;
+      return NATIONAL_STUDENTS_2026 * (POP_SHARE[prov] || 0.02) * lf * yearDrift(LATEST_YEAR) * (0.94 + seedRand(prov + 'stu') * 0.12);
+    }
+    function provTeachers(prov){ return provStudents(prov) / ratioFor(prov, prov); }
+    function provClasses(prov){ return provStudents(prov) / classSizeFor(prov); }
+    function officeWeights(prov){
+      var offs = officesOf(prov);
+      var raws = offs.map(function(o){ return 0.6 + seedRand(o + 'w'); });
+      var sum = raws.reduce(function(a, b){ return a + b; }, 0);
+      var out = {};
+      offs.forEach(function(o, i){ out[o] = raws[i] / sum; });
+      return out;
+    }
+    function offStudents(prov, office){ return provStudents(prov) * (officeWeights(prov)[office] || 0); }
+    function offTeachers(prov, office){ return offStudents(prov, office) / ratioFor(prov, office); }
+    function offClasses(prov, office){ return offStudents(prov, office) / classSizeFor(prov); }
+    function subjectShareAt(seedKey, subj){
+      var base = SUBJECT_SHARE[subj] || 0.02;
+      return base * (0.82 + seedRand(seedKey + subj + 'sh') * 0.36);
+    }
+    function provSubjectTeachers(prov, subj){ return provTeachers(prov) * subjectShareAt(prov, subj); }
+    function offSubjectTeachers(prov, office, subj){ return offTeachers(prov, office) * subjectShareAt(office, subj); }
+    function provSubjectPer100(prov, subj){
+      var t = subj === '전체' ? provTeachers(prov) : provSubjectTeachers(prov, subj);
+      return (t / provStudents(prov)) * 100;
+    }
+    function offSubjectPer100(prov, office, subj){
+      var t = subj === '전체' ? offTeachers(prov, office) : offSubjectTeachers(prov, office, subj);
+      return (t / offStudents(prov, office)) * 100;
+    }
+    function schoolsForName(name, isOffice){
+      var s = isOffice ? offStudents(st.region, name) : provStudents(name);
+      var perSchool = 380 + seedRand(name + 'schsz') * 260;
+      return Math.max(1, Math.round(s / perSchool));
+    }
+
+    // ---------------- context-dependent wrappers (operate on the CURRENT drill level) ----------------
+    function unitStudents(name){ return atNationalCtx() ? provStudents(name) : offStudents(st.region, name); }
+    function unitTeachers(name){ return atNationalCtx() ? provTeachers(name) : offTeachers(st.region, name); }
+    function unitClasses(name){ return atNationalCtx() ? provClasses(name) : offClasses(st.region, name); }
+    function subjectTeachers(name, subj){ return atNationalCtx() ? provSubjectTeachers(name, subj) : offSubjectTeachers(st.region, name, subj); }
+    function subjectPer100(name, subj){ return atNationalCtx() ? provSubjectPer100(name, subj) : offSubjectPer100(st.region, name, subj); }
+    function subjectPerClass(name, subj){
+      var t = subj === '전체' ? unitTeachers(name) : subjectTeachers(name, subj);
+      return t / unitClasses(name);
+    }
+    function atNationalCtx(){ return st.region === '전체'; }
+
+    // ---------------- drill context ----------------
+    var atNational = st.region === '전체';
+    var atOffice = !atNational && st.district !== '전체';
+    var drillList = atNational ? PROVINCES : officesOf(st.region);
+    var districtOptions = atNational ? ['전체'] : ['전체'].concat(officesOf(st.region));
+
+    var topTabs = [
+      { key: 'map', label: '지역별 교원 배치 현황' },
+      { key: 'heat', label: '지역 × 교과 배치 현황' }
+    ].map(function(t){
+      return { label: t.label, activeClass: st.topTab === t.key ? 'active' : '', onClick: function(){ self.setState({ topTab: t.key }); } };
+    });
+    var topTabIsMap = st.topTab === 'map';
+    var topTabIsHeat = st.topTab === 'heat';
+
+    // ---------------- map: tab metric (subject filter decides WHAT is measured; tab decides the basis) ----------------
+    var tabKey = st.mapTab;
+    var tabInfo = TAB_META[tabKey];
+    function tabValue(name){
+      if (tabKey === 'count') return st.subject === '전체' ? unitTeachers(name) : subjectTeachers(name, st.subject);
+      if (tabKey === 'per100') return subjectPer100(name, st.subject);
+      return subjectPerClass(name, st.subject);
+    }
+    var tabVals = drillList.map(tabValue);
+    var indMin = Math.min.apply(null, tabVals);
+    var indMax = Math.max.apply(null, tabVals);
+    function indicatorPct(v){ return indMax > indMin ? ((v - indMin) / (indMax - indMin)) * 100 : 50; }
+    function tabLabelText(v){ return fmtByTab(tabKey, v) + '명'; }
+
+    var subjLabel = st.subject === '전체' ? '전체' : st.subject;
+
+    // map/tooltip-level baseline: follows the MAP's current level (전국 지도 vs 시도의 교육지원청 지도)
+    function mapBaselineScopeList(){ return atNational ? PROVINCES : officesOf(st.region); }
+    function mapBaselineValueFor(){
+      var list = mapBaselineScopeList();
+      var tt = 0, ss = 0, cc = 0;
+      list.forEach(function(n){
+        var t = atNational
+          ? (st.subject === '전체' ? provTeachers(n) : provSubjectTeachers(n, st.subject))
+          : (st.subject === '전체' ? offTeachers(st.region, n) : offSubjectTeachers(st.region, n, st.subject));
+        var s = atNational ? provStudents(n) : offStudents(st.region, n);
+        var c = atNational ? provClasses(n) : offClasses(st.region, n);
+        tt += t; ss += s; cc += c;
+      });
+      if (tabKey === 'per100') return (tt / ss) * 100;
+      if (tabKey === 'perClass') return tt / cc;
+      return tt / list.length;
+    }
+    function mapBaselineLabelOf(){ return atNational ? '전국 평균' : (provShort(st.region) + ' 평균'); }
+
+    function tooltipRows(name){
+      var isOff = !atNational;
+      var teachersAll = isOff ? offTeachers(st.region, name) : provTeachers(name);
+      var teachersSubj = st.subject === '전체' ? teachersAll : (isOff ? offSubjectTeachers(st.region, name, st.subject) : provSubjectTeachers(name, st.subject));
+      var studentsV = isOff ? offStudents(st.region, name) : provStudents(name);
+      var classesV = isOff ? offClasses(st.region, name) : provClasses(name);
+      var schoolsV = schoolsForName(name, isOff);
+      var per100V = (teachersSubj / studentsV) * 100;
+      var perClassV = teachersSubj / classesV;
+      var rows = [];
+      var mainLabel, mainValue;
+      if (tabKey === 'count') {
+        mainLabel = subjLabel + ' 교원 수'; mainValue = fmt0(teachersSubj) + '명';
+        rows.push({ label: '학생 수', value: fmt0(studentsV) + '명' });
+        rows.push({ label: '학급 수', value: fmt0(classesV) + '개' });
+        rows.push({ label: '학교 수', value: fmt0(schoolsV) + '개' });
+      } else if (tabKey === 'per100') {
+        mainLabel = '학생 100명당 ' + subjLabel + ' 교원'; mainValue = fmt2(per100V) + '명';
+        var bAvg = mapBaselineValueFor();
+        rows.push({ label: mapBaselineLabelOf(), value: fmt2(bAvg) + '명' });
+        var bd = per100V - bAvg;
+        rows.push({ label: '평균 대비', value: (bd >= 0 ? '+' : '') + fmt2(bd) + '명' });
+        rows.push({ label: '교원 수', value: fmt0(teachersSubj) + '명' });
+        rows.push({ label: '학생 수', value: fmt0(studentsV) + '명' });
+      } else {
+        mainLabel = '학급당 ' + subjLabel + ' 교원'; mainValue = fmt2(perClassV) + '명';
+        var bAvg2 = mapBaselineValueFor();
+        rows.push({ label: mapBaselineLabelOf(), value: fmt2(bAvg2) + '명' });
+        var bd2 = perClassV - bAvg2;
+        rows.push({ label: '평균 대비', value: (bd2 >= 0 ? '+' : '') + fmt2(bd2) + '명' });
+        rows.push({ label: '교원 수', value: fmt0(teachersSubj) + '명' });
+        rows.push({ label: '학급 수', value: fmt0(classesV) + '개' });
+      }
+      return { name: name, mainLabel: mainLabel, mainValue: mainValue, rows: rows };
+    }
+
+    var mapPaths = [];
+    if (atNational) {
+      PROVINCES.forEach(function(name){
+        var v = tabValue(name);
+        var pct = indicatorPct(v);
+        var geo = window.GEO.provinces[name];
+        var isSel = name === st.region, isHover = st.hoverKey === name;
+        mapPaths.push({
+          d: geo.d, fill: seqColorOf(tabInfo.seq, pct), cls: (isSel ? 'is-selected ' : '') + (isHover ? 'is-hover' : ''),
+          title: name + ' · ' + tabLabelText(v),
+          onClick: function(){ self.setState({ region: name, district: '전체' }); },
+          onEnter: function(){ self.setState({ hoverKey: name }); },
+          onLeave: function(){ self.setState({ hoverKey: '' }); }
+        });
+      });
+    } else {
+      (window.GEO.offices[st.region] || []).forEach(function(o){
+        var v = tabValue(o.office);
+        var pct = indicatorPct(v);
+        var isSel = o.office === st.district, isHover = st.hoverKey === o.office;
+        mapPaths.push({
+          d: o.d, fill: seqColorOf(tabInfo.seq, pct), cls: (isSel ? 'is-selected ' : '') + (isHover ? 'is-hover' : ''),
+          title: o.office + ' · ' + tabLabelText(v) + ' · 관할: ' + o.jurisdiction.join(', '),
+          onClick: function(){ self.setState({ district: o.office }); },
+          onEnter: function(){ self.setState({ hoverKey: o.office }); },
+          onLeave: function(){ self.setState({ hoverKey: '' }); }
+        });
+      });
+    }
+    var NATIONAL_VIEWBOX_TIGHT = '-6 -10 672 632';
+    var mapViewBox = atNational ? NATIONAL_VIEWBOX_TIGHT : (window.GEO.provinces[st.region].bbox || [0,0,660,760]).join(' ');
+
+    var mapTabs = [
+      { key: 'count', label: '교원 수' },
+      { key: 'perClass', label: '학급당' }
+    ].map(function(t){
+      return { label: t.label, activeClass: tabKey === t.key ? 'active' : '', onClick: function(){ self.setState({ mapTab: t.key }); } };
+    });
+    var mapSubLine = subjLabel + ' 교원 기준 · ' + tabInfo.label + ' 지표 · 지도를 클릭하면 하위 단계로 이동하며 히트맵·상세표에 함께 반영됩니다';
+    var hoverActive = !!st.hoverKey && drillList.indexOf(st.hoverKey) !== -1;
+    var hoverInactive = !hoverActive;
+    var hover = hoverActive ? tooltipRows(st.hoverKey) : { name: '', mainLabel: '', mainValue: '', rows: [] };
+    var hoverVisClass = hoverActive ? '' : 'is-hidden';
+
+    // ---------------- right summary panel ----------------
+    var selTitle = atOffice ? st.district : (atNational ? '전국' : st.region);
+    var selSubLines = [];
+    if (atOffice) selSubLines.push('시도: ' + st.region);
+    selSubLines.push('학교급: ' + st.level);
+    selSubLines.push('교과: ' + subjLabel);
+
+    // scope totals at the CURRENTLY SELECTED level (single office if drilled that far, else the whole current drillList)
+    var scopeList = atOffice ? [st.district] : drillList;
+    var scopeTeachers = scopeList.reduce(function(s, n){ return s + (st.subject === '전체' ? unitTeachers(n) : subjectTeachers(n, st.subject)); }, 0);
+    var scopeStudents = scopeList.reduce(function(s, n){ return s + unitStudents(n); }, 0);
+    var scopeClasses = scopeList.reduce(function(s, n){ return s + unitClasses(n); }, 0);
+    var scopeMetric = tabKey === 'count' ? scopeTeachers : tabKey === 'per100' ? (scopeTeachers / scopeStudents) * 100 : scopeTeachers / scopeClasses;
+
+    var heroLabel = tabKey === 'count' ? (subjLabel + ' 교원 수')
+      : tabKey === 'per100' ? ('학생 100명당 ' + subjLabel + ' 교원 수')
+      : ('학급당 ' + subjLabel + ' 교원 수');
+    var heroValue = fmtByTab(tabKey, scopeMetric);
+    var heroUnit = tabInfo.unit;
+
+    // panel/selection-level baseline: region selected -> compare vs 전국평균 (rank among 17 시도);
+    // office selected -> compare vs 시도평균 (rank among that 시도's 교육지원청)
+    var hasBaseline = !atNational;
+    var baselineLabel = '', baselineValue = '', deltaText = '', deltaClass = 'delta-flat', rankLabel = '', rankText = '';
+    var showCallouts = false, calloutTitle = '', callouts = [];
+    if (hasBaseline) {
+      var panelScope = atOffice ? officesOf(st.region) : PROVINCES;
+      var panelRankOf = function(n){
+        if (atOffice) {
+          var tO = st.subject === '전체' ? offTeachers(st.region, n) : offSubjectTeachers(st.region, n, st.subject);
+          return tabKey === 'count' ? tO : tO / offClasses(st.region, n);
+        }
+        var tN = st.subject === '전체' ? provTeachers(n) : provSubjectTeachers(n, st.subject);
+        return tabKey === 'count' ? tN : tN / provClasses(n);
+      };
+      var panelVals = panelScope.map(function(n){ return { name: n, v: panelRankOf(n) }; });
+      var bAvgMain = panelVals.reduce(function(s, x){ return s + x.v; }, 0) / panelVals.length;
+      baselineLabel = atOffice ? (st.region + ' 평균') : '전국 평균';
+      baselineValue = fmtByTab(tabKey, bAvgMain) + '명';
+      var dMain = scopeMetric - bAvgMain;
+      deltaClass = dMain > 0.02 ? 'delta-up' : dMain < -0.02 ? 'delta-down' : 'delta-flat';
+      deltaText = (dMain >= 0 ? '+' : '') + fmtByTab(tabKey, dMain) + '명';
+      var ranked2 = panelVals.slice().sort(function(a,b){ return b.v - a.v; });
+      var myKey = atOffice ? st.district : st.region;
+      var myIdx3 = ranked2.findIndex(function(x){ return x.name === myKey; });
+      if (atOffice) { rankLabel = st.region + ' 내 순위'; rankText = (myIdx3 + 1) + ' / ' + panelScope.length; }
+      else { rankLabel = '전국 17개 시도 중 순위'; rankText = (myIdx3 + 1) + '위'; }
+    } else if (atNational) {
+      showCallouts = true; calloutTitle = tabInfo.label + ' 상위/하위 시도';
+      var ranked3 = PROVINCES.map(function(n){ return { name: n, v: tabValue(n) }; }).sort(function(a,b){ return b.v - a.v; });
+      callouts = [
+        { rank: '최고', name: ranked3[0].name, value: tabLabelText(ranked3[0].v) },
+        { rank: '최저', name: ranked3[ranked3.length-1].name, value: tabLabelText(ranked3[ranked3.length-1].v) }
+      ];
+    }
+    // ④ 기본 규모 정보: 항상 동일한 4개 항목 노출 (교과 선택과 무관)
+    var allTotalTeachers = scopeList.reduce(function(s, n){ return s + unitTeachers(n); }, 0);
+    var scopeSchools = scopeList.reduce(function(s, n){ return s + schoolsForName(n, !atNational); }, 0);
+    var basicRows = [
+      { label: '전체 교원 수', value: fmt0(allTotalTeachers) + '명' },
+      { label: '학생 수', value: fmt0(scopeStudents) + '명' },
+      { label: '학급 수', value: fmt0(scopeClasses) + '개' },
+      { label: '학교 수', value: fmt0(scopeSchools) + '개' }
+    ];
+
+    // ---------------- heatmap ----------------
+    // multi-select filters: which offices (district) and subjects appear in the heatmap.
+    // empty array = no filter applied (show everything); 교육지원청 filter only meaningful once a 시도 is drilled in.
+    var heatDistrictOptionsList = atNational ? [] : officesOf(st.region);
+    var heatDistrictChecklist = heatDistrictOptionsList.map(function(o){
+      var checked = st.heatDistricts.indexOf(o) !== -1;
+      return {
+        name: officeShortName(o), checked: checked,
+        onToggle: function(){
+          var next = checked ? st.heatDistricts.filter(function(x){ return x !== o; }) : st.heatDistricts.concat([o]);
+          self.setState({ heatDistricts: next });
+        }
+      };
+    });
+    var heatSubjectChecklist = SUBJECTS.map(function(s){
+      var checked = st.heatSubjects.indexOf(s) !== -1;
+      return {
+        name: s, checked: checked,
+        onToggle: function(){
+          var next = checked ? st.heatSubjects.filter(function(x){ return x !== s; }) : st.heatSubjects.concat([s]);
+          self.setState({ heatSubjects: next });
+        }
+      };
+    });
+    var heatDistrictSummary = atNational ? '전체' : (st.heatDistricts.length ? st.heatDistricts.length + '개 선택' : '전체');
+    var heatSubjectSummary = st.heatSubjects.length ? st.heatSubjects.length + '개 선택' : '전체';
+    var onToggleHeatDistrictOpen = function(){ self.setState({ heatDistrictOpen: !st.heatDistrictOpen, heatSubjectOpen: false }); };
+    var onToggleHeatSubjectOpen = function(){ self.setState({ heatSubjectOpen: !st.heatSubjectOpen, heatDistrictOpen: false }); };
+    var onCloseHeatDropdowns = function(){ self.setState({ heatDistrictOpen: false, heatSubjectOpen: false }); };
+    var onClearHeatDistricts = function(){ self.setState({ heatDistricts: [] }); };
+    var onClearHeatSubjects = function(){ self.setState({ heatSubjects: [] }); };
+
+    var heatSubjectList = st.heatSubjects.length ? SUBJECTS.filter(function(s){ return st.heatSubjects.indexOf(s) !== -1; }) : SUBJECTS;
+    var heatRowList = (!atNational && st.heatDistricts.length) ? drillList.filter(function(n){ return st.heatDistricts.indexOf(n) !== -1; }) : drillList;
+
+    var heatColHeads = heatSubjectList.map(function(s){
+      return { name: s, selClass: s === st.subject ? 'is-selected' : '', onClick: function(){ self.setState({ subject: s }); } };
+    });
+    function heatCellValue(n, s){
+      if (st.heatMetric === 'count') return subjectTeachers(n, s);
+      if (st.heatMetric === 'per100') return subjectPer100(n, s);
+      return subjectPerClass(n, s);
+    }
+    function heatCellFmt(v){ return st.heatMetric === 'count' ? fmt0(v) : st.heatMetric === 'per100' ? fmt1(v) : fmt2(v); }
+    var heatSeq = TAB_META[st.heatMetric].seq;
+    var heatVals = [];
+    heatRowList.forEach(function(n){ heatSubjectList.forEach(function(s){ heatVals.push(heatCellValue(n, s)); }); });
+    if (!heatVals.length) heatVals.push(0);
+    var heatMin = Math.min.apply(null, heatVals), heatMax = Math.max.apply(null, heatVals);
+    function heatPct(v){ return heatMax > heatMin ? ((v - heatMin) / (heatMax - heatMin)) * 100 : 50; }
+    var heatRows = heatRowList.map(function(n){
+      var displayName = atNational ? n : officeShortName(n);
+      var isSel = atNational ? n === st.region : n === st.district;
+      var cells = heatSubjectList.map(function(s){
+        var v = heatCellValue(n, s);
+        var pct = heatPct(v);
+        return {
+          label: heatCellFmt(v),
+          bg: seqColorOf(heatSeq, pct), textColor: seqText(pct), selClass: (isSel && s === st.subject) ? 'is-selected' : '',
+          title: n + ' · ' + s + ' · ' + heatCellFmt(v) + TAB_META[st.heatMetric].unit,
+          onClick: (function(nn, ss){ return function(){
+            var patch = { subject: ss };
+            if (atNational) { patch.region = nn; patch.district = '전체'; patch.heatDistricts = []; } else { patch.district = nn; }
+            self.setState(patch);
+          }; })(n, s)
+        };
+      });
+      return {
+        name: displayName, selClass: isSel ? 'is-selected' : '', cells: cells,
+        onClick: (function(nn){ return function(){
+          if (atNational) self.setState({ region: nn, district: '전체', heatDistricts: [] });
+          else self.setState({ district: nn });
+        }; })(n)
+      };
+    });
+    var heatMetricTabs = ['count', 'perClass'].map(function(k){
+      return { label: TAB_META[k].label, activeClass: st.heatMetric === k ? 'active' : '', onClick: function(){ self.setState({ heatMetric: k }); } };
+    });
+    var heatLegendMin = heatCellFmt(heatMin), heatLegendMax = heatCellFmt(heatMax), heatLegendSwatches = heatSeq;
+    var heatUnitLabel = TAB_META[st.heatMetric].unit;
+
+    return {
+      dataAsof: DATA_ASOF,
+      topTabs: topTabs, topTabIsMap: topTabIsMap, topTabIsHeat: topTabIsHeat,
+      region: st.region, district: st.district, level: st.level, subject: st.subject,
+      regionOptions: ['전체'].concat(PROVINCES), districtOptions: districtOptions,
+      districtDisabled: atNational, levelOptions: LEVELS, subjectOptions: ['전체'].concat(SUBJECTS),
+      onChangeRegion: function(e){ self.setState({ region: e.target.value, district: '전체', heatDistricts: [] }); },
+      onChangeDistrict: function(e){ self.setState({ district: e.target.value }); },
+      onChangeLevel: function(e){ self.setState({ level: e.target.value }); },
+      onChangeSubject: function(e){ self.setState({ subject: e.target.value }); },
+      onReset: function(){ self.setState({ region: '전체', district: '전체', level: '전체', subject: '전체', mapTab: 'count', heatMetric: 'count', hoverKey: '', heatDistricts: [], heatSubjects: [], heatDistrictOpen: false, heatSubjectOpen: false }); },
+      regionSelected: !atNational, districtSelected: atOffice, districtShort: atOffice ? officeShortName(st.district) : '',
+      onDrillNational: function(){ self.setState({ region: '전체', district: '전체', hoverKey: '', heatDistricts: [] }); },
+      onDrillRegion: function(){ self.setState({ district: '전체', hoverKey: '' }); },
+      heatDistrictSummary: heatDistrictSummary, heatSubjectSummary: heatSubjectSummary,
+      heatDistrictChecklist: heatDistrictChecklist, heatSubjectChecklist: heatSubjectChecklist,
+      heatDistrictOpen: st.heatDistrictOpen, heatSubjectOpen: st.heatSubjectOpen,
+      onToggleHeatDistrictOpen: onToggleHeatDistrictOpen, onToggleHeatSubjectOpen: onToggleHeatSubjectOpen,
+      onCloseHeatDropdowns: onCloseHeatDropdowns, onClearHeatDistricts: onClearHeatDistricts, onClearHeatSubjects: onClearHeatSubjects,
+      mapSubLine: mapSubLine,
+      mapTabs: mapTabs,
+      mapViewBox: mapViewBox, mapPaths: mapPaths,
+      hoverActive: hoverActive, hoverInactive: hoverInactive, hover: hover, hoverVisClass: hoverVisClass,
+      legendMin: tabLabelText(indMin), legendMax: tabLabelText(indMax), legendSwatches: tabInfo.seq,
+      showLevelNote: st.level === '초등학교' && st.subject !== '전체',
+      selTitle: selTitle, selSubLines: selSubLines,
+      heroLabel: heroLabel, heroValue: heroValue, heroUnit: heroUnit,
+      hasBaseline: hasBaseline, baselineLabel: baselineLabel, baselineValue: baselineValue, deltaClass: deltaClass, deltaText: deltaText,
+      rankLabel: rankLabel, rankText: rankText, basicRows: basicRows,
+      showCallouts: showCallouts, calloutTitle: calloutTitle, callouts: callouts,
+      heatCornerLabel: atNational ? '시도' : '교육지원청', heatUnitLabel: heatUnitLabel,
+      heatLegendMin: heatLegendMin, heatLegendMax: heatLegendMax, heatLegendSwatches: heatLegendSwatches,
+      heatMetricTabs: heatMetricTabs, heatColHeads: heatColHeads, heatRows: heatRows
+    };
+  }
+}
+</script>
+</body>
+</html>

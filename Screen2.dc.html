@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>2. 중장기 교원 수급 예측 · 교원 배치·수급 통합 대시보드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="screen2.css?v=5">
+<script src="geo.js?v=5"></script>
+<script src="screen2-data.js?v=5"></script>
+<style>
+html,body{margin:0;padding:0;}
+a{color:#063a74;text-decoration:none;} a:hover{color:#1c589c;}
+*{box-sizing:border-box;}
+</style>
+</helmet>
+<div class="app">
+  <div class="sidebar">
+    <div class="gov-banner">교육부 · 한국교육학술정보원 KERIS</div>
+    <div class="brand">
+      <div class="brand-title">교원 배치·수급 통합 대시보드</div>
+      <div class="brand-sub">전국 17개 시도 기준</div>
+    </div>
+    <div class="nav">
+      <a class="nav-item" href="Screen1.dc.html"><span class="nstep">1</span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="4" height="10"/><rect x="10" y="6" width="4" height="14"/><rect x="17" y="3" width="4" height="17"/></svg>
+        교원 배치 현황 진단
+      </a>
+      <a class="nav-item active" href="Screen2.dc.html"><span class="nstep">2</span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-9"/><path d="M15 6h6v6"/></svg>
+        중장기 교원 수급 예측
+      </a>
+      <a class="nav-item" href="Screen3.dc.html"><span class="nstep">3</span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>
+        기간제·신규·저경력 배치 현황
+      </a>
+    </div>
+    <div class="side-foot">SUPPLY_DEMAND_FORECAST<br/>대응 과제: 8·9번 수요조사서<br/>지도: 통계청 행정구역 경계(2018)</div>
+  </div>
+
+  <div class="content">
+    <div class="page-title-row">
+      <div class="page-title">중장기 교원 수급 예측</div>
+      <div class="data-asof">데이터 기준 : {{dataAsof}}</div>
+      <div class="info-wrap">
+        <button class="info-icon">i</button>
+        <div class="info-popover">
+          <div class="info-popover-title">예측 결과 안내</div>
+          <ul>
+            <li>교원 수요는 학생 수·학급 수 변화 등을 반영하여 산출합니다.</li>
+            <li>교원 공급은 신규임용·퇴직·휴직 등의 변화를 반영하여 산출합니다.</li>
+            <li>2027~2031년은 모델 기반 예측값입니다.</li>
+            <li>실제 교원 수급은 정책·정원·인사계획 변화 등에 따라 달라질 수 있습니다.</li>
+            <li>예측구간은 실제 모델 결과와 연계하여 표시할 예정입니다.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="page-sub">학령인구·학급 수 변화와 교원 임용·퇴직·휴직을 기반으로 향후 5개년의 교원 수급을 예측합니다.</div>
+
+    <div class="panel filter-panel">
+      <div class="filter-bar">
+        <div class="filter-item"><label>예측기간</label>
+          <select value="{{forecastPeriod}}" onChange="{{onChangeForecastPeriod}}"><sc-for list="{{forecastPeriodOptions}}" as="o" hint-placeholder-count="2"><option value="{{o.value}}">{{o.label}}</option></sc-for></select>
+        </div>
+        <div class="filter-item"><label>예측연도</label>
+          <select value="{{forecastYear}}" onChange="{{onChangeForecastYear}}"><sc-for list="{{forecastYearOptions}}" as="o" hint-placeholder-count="10"><option value="{{o}}">{{o}}</option></sc-for></select>
+        </div>
+        <div class="filter-item"><label>시도</label>
+          <select value="{{region}}" onChange="{{onChangeRegion}}"><sc-for list="{{regionOptions}}" as="o" hint-placeholder-count="18"><option value="{{o}}">{{o}}</option></sc-for></select>
+        </div>
+        <div class="filter-item"><label>교육지원청</label>
+          <select value="{{district}}" onChange="{{onChangeDistrict}}" disabled="{{districtDisabled}}"><sc-for list="{{districtOptions}}" as="o" hint-placeholder-count="5"><option value="{{o}}">{{o}}</option></sc-for></select>
+        </div>
+        <div class="filter-item"><label>학교급</label>
+          <select value="{{level}}" onChange="{{onChangeLevel}}"><sc-for list="{{levelOptions}}" as="o" hint-placeholder-count="4"><option value="{{o}}">{{o}}</option></sc-for></select>
+        </div>
+        <div class="filter-item"><label>교과</label>
+          <select value="{{subject}}" onChange="{{onChangeSubject}}"><sc-for list="{{subjectOptions}}" as="o" hint-placeholder-count="20"><option value="{{o}}">{{o}}</option></sc-for></select>
+        </div>
+        <div class="filter-reset-item">
+          <button class="icon-reset" onClick="{{onReset}}" title="필터 초기화" aria-label="필터 초기화">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid12">
+      <div class="col-8">
+        <div class="panel chart-card">
+        <div class="chart-section chart-section1">
+          <div class="panel-title">교원 수요·공급 전망</div>
+          <div class="panel-sub">현재 실적과 향후 5개년의 교원 수요·공급 전망을 확인합니다.</div>
+          <div class="chart-legend">
+            <div class="chart-legend-item"><span class="legend-line" style="border-color:#063a74"></span>수요</div>
+            <div class="chart-legend-item"><span class="legend-line" style="border-color:#3fa654"></span>공급</div>
+            <div class="chart-legend-item"><span class="legend-line dashed" style="border-color:#6d7379"></span>실제 | 예측 구분</div>
+            <div class="legend-note">※ 예측구간은 실제 모델 산출 결과와 연계 예정</div>
+          </div>
+          <div class="chart-wrap">
+            <svg viewBox="0 0 690 210" width="100%" preserveAspectRatio="none">
+              <line x1="54" y1="12" x2="54" y2="190" stroke="#cdd1d5" stroke-width="1"/>
+              <line x1="54" y1="190" x2="636" y2="190" stroke="#b1b8be" stroke-width="1"/>
+              <polygon points="{{chart.bandPts}}" fill="#063a74" opacity="0.10"></polygon>
+              <polyline points="{{chart.demandPastPts}}" fill="none" stroke="#063a74" stroke-width="2.8"></polyline>
+              <polyline points="{{chart.demandFutPts}}" fill="none" stroke="#063a74" stroke-width="2.8" stroke-dasharray="6,4"></polyline>
+              <polyline points="{{chart.supplyPastPts}}" fill="none" stroke="#3fa654" stroke-width="2.8"></polyline>
+              <polyline points="{{chart.supplyFutPts}}" fill="none" stroke="#3fa654" stroke-width="2.8" stroke-dasharray="6,4"></polyline>
+              <line x1="{{chart.nowX}}" y1="12" x2="{{chart.nowX}}" y2="190" stroke="#6d7379" stroke-width="1.2" stroke-dasharray="2,2"></line>
+              <text x="{{chart.nowX}}" y="10" font-size="11" fill="#6d7379" text-anchor="end">현재 ‹</text>
+              <text x="{{chart.nowX}}" y="10" font-size="11" fill="#6d7379" text-anchor="start">› 예측</text>
+              <line x1="{{chart.selX}}" y1="12" x2="{{chart.selX}}" y2="190" stroke="#1c589c" stroke-width="1.5"></line>
+              <circle cx="{{chart.selX}}" cy="{{chart.selYDemand}}" r="4.5" fill="#063a74" stroke="#fff" stroke-width="1.5"></circle>
+              <circle cx="{{chart.selX}}" cy="{{chart.selYSupply}}" r="4.5" fill="#3fa654" stroke="#fff" stroke-width="1.5"></circle>
+              <circle class="chart-point-hit" cx="{{chart.selX}}" cy="{{chart.selYDemand}}" r="14" onMouseEnter="{{chartHero.onEnter}}" onMouseLeave="{{chartHero.onLeave}}"></circle>
+              <circle class="chart-point-hit" cx="{{chart.selX}}" cy="{{chart.selYSupply}}" r="14" onMouseEnter="{{chartHero.onEnter}}" onMouseLeave="{{chartHero.onLeave}}"></circle>
+            </svg>
+            <div class="tick-row">
+              <sc-for list="{{chart.ticks}}" as="t" hint-placeholder-count="8"><div class="tick-label" style="left:{{t.leftPct}}%;">{{t.label}}</div></sc-for>
+            </div>
+            <div class="chart-badge" style="{{chartBadgeStyle}}">{{chartHero.year}} · <span style="color:{{chartHero.gapColor}}">{{chartHero.gapSigned}}명 ({{chartHero.gapRateSigned}}%)</span> {{chartHero.statusLabel}}</div>
+            <div class="chart-tooltip {{chartHoverVisClass}}" style="{{chartTooltipStyle}}">
+              <div class="ct-title">{{chartHero.year}}년 전망</div>
+              <div class="ct-row"><span>예상 수요</span><b>{{chartHero.demand}}명</b></div>
+              <div class="ct-row"><span>예상 공급</span><b>{{chartHero.supply}}명</b></div>
+              <div class="ct-row"><span>수급 차이</span><b style="color:{{chartHero.gapColor}}">{{chartHero.gapSigned}}명 ({{chartHero.gapRateSigned}}%)</b></div>
+              <div class="ct-row"><span>상태</span><b>{{chartHero.statusLabel}}</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-section chart-section2">
+          <div class="panel-title">연도별 수급 차이</div>
+          <div class="panel-sub">공급 − 수요, 0 기준선 · 막대 클릭 시 예측연도가 동기화됩니다</div>
+          <div class="divchart">
+            <div class="divchart-baseline"></div>
+            <sc-for list="{{divCols}}" as="d" hint-placeholder-count="8">
+              <button class="divcol {{d.selectedClass}}" onClick="{{d.onClick}}" title="{{d.title}}">
+                <div class="divcol-bar" style="{{d.style}}"></div>
+              </button>
+            </sc-for>
+          </div>
+          <div class="divchart-ticks">
+            <sc-for list="{{divCols}}" as="d" hint-placeholder-count="8"><span>{{d.tick}}</span></sc-for>
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <div class="col-4">
+        <div class="panel" style="display:flex; flex-direction:column; flex:2; min-height:0;">
+          <div class="panel-title">{{forecastYear}}년 지역별 수급 현황</div>
+          <div class="drill-crumb">
+            <button onClick="{{onDrillNational}}">전국</button>
+            <sc-if value="{{regionSelected}}" hint-placeholder-val="{{false}}"><span>›</span><button onClick="{{onDrillRegion}}">{{region}}</button></sc-if>
+            <sc-if value="{{districtSelected}}" hint-placeholder-val="{{false}}"><span>›</span><span class="cur">{{districtShort}}</span></sc-if>
+          </div>
+          <div class="panel-sub">수급 차이율 기준 · 지도를 클릭하면 하위 단계로 이동합니다</div>
+          <div class="map-area">
+            <div class="map-svg-wrap">
+              <svg class="map-svg" viewBox="{{mapViewBox}}" xmlns="http://www.w3.org/2000/svg">
+                <sc-for list="{{mapPaths}}" as="p" hint-placeholder-count="17">
+                  <path d="{{p.d}}" fill="{{p.fill}}" class="{{p.cls}}" onClick="{{p.onClick}}" onMouseEnter="{{p.onEnter}}" onMouseLeave="{{p.onLeave}}"><title>{{p.title}}</title></path>
+                </sc-for>
+              </svg>
+            </div>
+            <div class="map-detail">
+              <sc-if value="{{hoverActive}}" hint-placeholder-val="{{false}}">
+                <div class="hc-title">{{hover.name}}</div>
+                <div class="hc-row hc-main"><span>{{hover.mainLabel}}</span><b>{{hover.mainValue}}</b></div>
+                <div class="hc-div"></div>
+                <sc-for list="{{hover.rows}}" as="r" hint-placeholder-count="4">
+                  <div class="hc-row"><span>{{r.label}}</span><b>{{r.value}}</b></div>
+                </sc-for>
+              </sc-if>
+              <sc-if value="{{hoverInactive}}" hint-placeholder-val="{{true}}">
+                <div class="hc-hint">지역에 마우스를 올리면 상세 수급 정보를 확인할 수 있습니다.</div>
+              </sc-if>
+            </div>
+          </div>
+          <div class="legend-row">
+            <span>{{legendMin}}</span>
+            <div class="legend-ramp">
+              <sc-for list="{{legendSwatches}}" as="sw" hint-placeholder-count="7"><span style="background:{{sw}}"></span></sc-for>
+            </div>
+            <span>{{legendMax}}</span>
+          </div>
+        </div>
+
+        <div class="panel" style="flex:0.75; min-height:0; display:flex; flex-direction:column;">
+          <div class="panel-title">{{forecastYear}}년 교과별 예상 부족 교원 수</div>
+          <div class="panel-sub">수요 > 공급인 교과 전체 표시 · 선택한 교과는 강조됩니다</div>
+          <sc-if value="{{topNEmpty}}" hint-placeholder-val="{{false}}">
+            <div class="topn-empty">현재 조건에서 부족이 예상되는 교과가 없습니다.</div>
+          </sc-if>
+          <div class="topn-list">
+            <sc-for list="{{topNItems}}" as="r" hint-placeholder-count="10">
+              <div class="topn-row {{r.selClass}}">
+                <div class="topn-label">{{r.name}}</div>
+                <div class="topn-track"><div class="topn-fill" style="{{r.style}}"></div></div>
+                <div class="topn-value">{{r.valueText}}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-foot">
+      <span><b>교원 배치·수급 통합 대시보드</b> · 한국교육학술정보원(KERIS)</span>
+      <span>지도 경계 : 통계청 행정구역(2018) · 본 화면의 수치는 UI 검토용 예시 데이터</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.state = {
+      forecastPeriod: 5, forecastYear: 2031, region: '전체', district: '전체', level: '전체', subject: '전체', hoverKey: '', chartHover: false
+    };
+  }
+
+  componentDidMount(){
+    var self = this;
+    this._navHandler = function(e){
+      var t = e.target;
+      var a = (t && t.closest) ? t.closest('a[href]') : null;
+      if (!a) return;
+      var h = a.getAttribute('href') || '';
+      if (h.indexOf('.dc.html') === -1 || h.indexOf('?') !== -1) return;
+      e.preventDefault();
+      window.location.href = h + (window.location.search || '');
+    };
+    document.addEventListener('click', this._navHandler, true);
+  }
+
+  componentWillUnmount(){
+    if (this._navHandler) document.removeEventListener('click', this._navHandler, true);
+    if (this._waitTimer) clearInterval(this._waitTimer);
+  }
+
+  renderVals(){
+    if (!window.GEO || !window.__DCDATA_READY) {
+      if (!this._waitTimer) {
+        var c = this;
+        this._waitTimer = setInterval(function(){
+          if (window.GEO && window.__DCDATA_READY) { clearInterval(c._waitTimer); c._waitTimer = 0; c.forceUpdate(); }
+        }, 40);
+      }
+      return {};
+    }
+    var self = this;
+    var st = this.state;
+
+    // ---------------- base master-data helpers (identical formulas to Screen 1) ----------------
+    function ratioFor(prov, seedKey){
+      var rb = REMOTE_BIAS[prov] || 0;
+      var noise = (seedRand(seedKey + 'ratio' + LATEST_YEAR) - 0.5) * 1.1;
+      return clamp(STUDENT_TEACHER_RATIO - rb * 0.055 + noise, 8, 20);
+    }
+    function classSizeFor(prov){
+      var rb = REMOTE_BIAS[prov] || 0;
+      return clamp(CLASS_SIZE - rb * 0.03, 12, 28);
+    }
+    function provStudents(prov){
+      var lf = LEVEL_FACTOR[st.level] || 1;
+      return NATIONAL_STUDENTS_2026 * (POP_SHARE[prov] || 0.02) * lf * (0.94 + seedRand(prov + 'stu') * 0.12);
+    }
+    function provTeachers(prov){ return provStudents(prov) / ratioFor(prov, prov); }
+    function officeWeights(prov){
+      var offs = officesOf(prov);
+      var raws = offs.map(function(o){ return 0.6 + seedRand(o + 'w'); });
+      var sum = raws.reduce(function(a, b){ return a + b; }, 0);
+      var out = {};
+      offs.forEach(function(o, i){ out[o] = raws[i] / sum; });
+      return out;
+    }
+    function offStudents(prov, office){ return provStudents(prov) * (officeWeights(prov)[office] || 0); }
+    function offTeachers(prov, office){ return offStudents(prov, office) / ratioFor(prov, office); }
+    function subjectShareAt(seedKey, subj){
+      var base = SUBJECT_SHARE[subj] || 0.02;
+      return base * (0.82 + seedRand(seedKey + subj + 'sh') * 0.36);
+    }
+    function provSubjectTeachers(prov, subj){ return provTeachers(prov) * subjectShareAt(prov, subj); }
+    function offSubjectTeachers(prov, office, subj){ return offTeachers(prov, office) * subjectShareAt(office, subj); }
+
+    function atNationalCtx(){ return st.region === '전체'; }
+    function unitTeachers(name){ return atNationalCtx() ? provTeachers(name) : offTeachers(st.region, name); }
+    function subjectTeachers(name, subj){ return atNationalCtx() ? provSubjectTeachers(name, subj) : offSubjectTeachers(st.region, name, subj); }
+    function baseTeachers(name, subj){ return subj === '전체' ? unitTeachers(name) : subjectTeachers(name, subj); }
+    function regionBiasFor(name){
+      return atNationalCtx() ? (REMOTE_BIAS[name] || 0) : ((REMOTE_BIAS[st.region] || 0) + (seedRand(name + 'offbias') - 0.5) * 16);
+    }
+    function subjBias(subj){ return subj === '전체' ? 0 : (SUBJECT_BIAS[subj] || 0); }
+
+    function demandForUnit(name, subj, yearOffset){
+      return baseTeachers(name, subj) * (1 - 0.022 * yearOffset);
+    }
+    function supplyForUnit(name, subj, yearOffset){
+      var base = baseTeachers(name, subj);
+      var gb = regionBiasFor(name) + subjBias(subj);
+      var biasFactor = 1 - gb * 0.0006 * Math.max(0, yearOffset);
+      return base * 0.975 * (1 - 0.009 * yearOffset) * biasFactor;
+    }
+    // province-level formulas that ignore the current drill context — used to keep showing a
+    // clicked/selected province's aggregate info in the map side panel even after drilling into its offices.
+    function provinceBaseTeachers(prov, subj){ return subj === '전체' ? provTeachers(prov) : provSubjectTeachers(prov, subj); }
+    function demandForProvince(prov, subj, yearOffset){
+      return provinceBaseTeachers(prov, subj) * (1 - 0.022 * yearOffset);
+    }
+    function supplyForProvince(prov, subj, yearOffset){
+      var base = provinceBaseTeachers(prov, subj);
+      var gb = (REMOTE_BIAS[prov] || 0) + subjBias(subj);
+      var biasFactor = 1 - gb * 0.0006 * Math.max(0, yearOffset);
+      return base * 0.975 * (1 - 0.009 * yearOffset) * biasFactor;
+    }
+
+    // ---------------- drill context (identical structure to Screen 1) ----------------
+    var atNational = st.region === '전체';
+    var atOffice = !atNational && st.district !== '전체';
+    var drillList = atNational ? PROVINCES : officesOf(st.region);
+    var districtOptions = atNational ? ['전체'] : ['전체'].concat(officesOf(st.region));
+    var scopeList = atOffice ? [st.district] : drillList;
+
+    var forecastPeriod = st.forecastPeriod === 10 ? 10 : 5;
+    var forecastYearOptions = [];
+    for (var fy = BASE_YEAR + 1; fy <= BASE_YEAR + forecastPeriod; fy++) forecastYearOptions.push(fy);
+    var defaultForecastYear = BASE_YEAR + forecastPeriod;
+    var forecastYear = forecastYearOptions.indexOf(st.forecastYear) !== -1 ? st.forecastYear : defaultForecastYear;
+    var selOffset = forecastYear - BASE_YEAR;
+    // full chart range = 2yr history + base year + the selected forecast period, overriding the module-level default
+    var CHART_YEARS = [BASE_YEAR - 2, BASE_YEAR - 1, BASE_YEAR].concat(forecastYearOptions);
+
+    // ---------------- chart 1+2: aggregate demand/supply across current scope, full CHART_YEARS range ----------------
+    var demandSeries = CHART_YEARS.map(function(y){
+      var off = y - BASE_YEAR;
+      return scopeList.reduce(function(s, n){ return s + demandForUnit(n, st.subject, off); }, 0);
+    });
+    var supplySeries = CHART_YEARS.map(function(y){
+      var off = y - BASE_YEAR;
+      return scopeList.reduce(function(s, n){ return s + supplyForUnit(n, st.subject, off); }, 0);
+    });
+    var nowIdx = CHART_YEARS.indexOf(BASE_YEAR);
+    var selIdx = CHART_YEARS.indexOf(forecastYear);
+
+    var plotX0 = 54, plotX1 = 636, plotY0 = 12, plotY1 = 190;
+    var bandArr = CHART_YEARS.map(function(y, i){ var off = Math.max(0, y - BASE_YEAR); return supplySeries[i] * 0.018 * off; });
+    var allVals = demandSeries.concat(supplySeries).concat(supplySeries.map(function(v, i){ return v + bandArr[i]; }));
+    var minV = Math.min.apply(null, allVals) * 0.95;
+    var maxV = Math.max.apply(null, allVals) * 1.05;
+    function xAt(i){ return plotX0 + (i / (CHART_YEARS.length - 1)) * (plotX1 - plotX0); }
+    function yAt(v){ return plotY1 - ((v - minV) / (maxV - minV)) * (plotY1 - plotY0); }
+    function ptsStr(arr, i0, i1){ var out = []; for (var i = i0; i <= i1; i++) out.push(Math.round(xAt(i)) + ',' + Math.round(yAt(arr[i]))); return out.join(' '); }
+    var demandPastPts = ptsStr(demandSeries, 0, nowIdx);
+    var demandFutPts = ptsStr(demandSeries, nowIdx, CHART_YEARS.length - 1);
+    var supplyPastPts = ptsStr(supplySeries, 0, nowIdx);
+    var supplyFutPts = ptsStr(supplySeries, nowIdx, CHART_YEARS.length - 1);
+    var upperArr = supplySeries.map(function(v, i){ return v + bandArr[i]; });
+    var lowerArr = supplySeries.map(function(v, i){ return v - bandArr[i]; });
+    var upperPts = []; for (var i2 = nowIdx; i2 <= CHART_YEARS.length - 1; i2++) upperPts.push(Math.round(xAt(i2)) + ',' + Math.round(yAt(upperArr[i2])));
+    var lowerPts = []; for (var i3 = CHART_YEARS.length - 1; i3 >= nowIdx; i3--) lowerPts.push(Math.round(xAt(i3)) + ',' + Math.round(yAt(lowerArr[i3])));
+    var bandPts = upperPts.concat(lowerPts).join(' ');
+    // with more than 8 points on the line chart (10yr forecast), thin out the labels so they don't overlap —
+    // keep every other year plus the base year and the final year, but always keep every tick's position mark.
+    var tickStride = CHART_YEARS.length > 8 ? 2 : 1;
+    var ticks = CHART_YEARS.map(function(y, i){
+      var showLabel = (i % tickStride === 0) || y === BASE_YEAR || i === CHART_YEARS.length - 1;
+      return { label: showLabel ? (String(y) + (y === BASE_YEAR ? ' (현재)' : '')) : '', leftPct: (xAt(i) / 690) * 100 };
+    });
+
+    var selDemand = demandSeries[selIdx], selSupply = supplySeries[selIdx];
+    var selGap = Math.round(selSupply - selDemand);
+    var selGapRate = (selGap / selDemand) * 100;
+    var selStatus = gapStatus(selGapRate);
+    var selPoint = { x: xAt(selIdx), yDemand: yAt(selDemand), ySupply: yAt(selSupply) };
+    var selTopY = Math.min(selPoint.yDemand, selPoint.ySupply);
+    var chartHero = {
+      year: forecastYear, demand: fmt0(selDemand), supply: fmt0(selSupply),
+      gapSigned: (selGap >= 0 ? '+' : '') + fmt0(selGap), gapRateSigned: (selGapRate >= 0 ? '+' : '') + selGapRate.toFixed(1),
+      gapColor: selGap >= 0 ? '#063a74' : '#de3412', statusLabel: gapStatusLabel(selStatus),
+      onEnter: function(){ self.setState({ chartHover: true }); },
+      onLeave: function(){ self.setState({ chartHover: false }); }
+    };
+    var chartHoverVisClass = st.chartHover ? '' : 'is-hidden';
+    // chart-wrap's rendered box = svg (viewBox 690x210, flex-filled) + a 17px tick-row beneath it;
+    // convert svg-unit coords to a % of that combined box so the HTML overlay lines up with the svg point.
+    var chartWrapUnitH = 210 + 17 * (210 / 178); // approximate tick-row's svg-unit equivalent height
+    var chartBadgeLeftPct = clamp((selPoint.x / 690) * 100, 6, 98);
+    var chartBadgeTopPct = clamp(((selTopY - 6) / chartWrapUnitH) * 100, 3, 92);
+    var chartTooltipLeftPct = clamp((selPoint.x / 690) * 100, 8, 92);
+    var chartTooltipTopPct = clamp(((selTopY - 20) / chartWrapUnitH) * 100, 3, 80);
+    var chartBadgeStyle = 'left:' + chartBadgeLeftPct + '%; top:' + chartBadgeTopPct + '%;';
+
+    // ---------------- chart 2: diverging bar per year, full CHART_YEARS, highlight selected forecast year ----------------
+    var maxAbsGap = Math.max.apply(null, CHART_YEARS.map(function(y, i){ return Math.abs(supplySeries[i] - demandSeries[i]); }));
+    var divCols = CHART_YEARS.map(function(y, i){
+      var g = supplySeries[i] - demandSeries[i];
+      var h = clamp((Math.abs(g) / (maxAbsGap || 1)) * 45, 3, 45);
+      var isForecast = y > BASE_YEAR;
+      var barColor = g >= 0 ? '#5f96d6' : '#d9705f';
+      var style = g >= 0 ? ('bottom:50%; height:' + h + '%; background:' + barColor + ';') : ('top:50%; height:' + h + '%; background:' + barColor + ';');
+      var isSel = y === forecastYear;
+      return {
+        year: y, tick: String(y), title: y + '년 · 공급-수요 ' + (g >= 0 ? '+' : '') + Math.round(g) + '명',
+        style: style, selectedClass: isSel ? 'selected' : '',
+        onClick: isForecast ? function(){ self.setState({ forecastYear: y }); } : function(){}
+      };
+    });
+
+    // ---------------- real choropleth map (same GeoJSON + drill structure as Screen 1) ----------------
+    function rateForUnit(name){
+      var d = demandForUnit(name, st.subject, selOffset);
+      var s = supplyForUnit(name, st.subject, selOffset);
+      return { d: d, s: s, rate: ((s - d) / d) * 100 };
+    }
+    function rateForNamed(name, forceProvince){
+      var d = forceProvince ? demandForProvince(name, st.subject, selOffset) : demandForUnit(name, st.subject, selOffset);
+      var s = forceProvince ? supplyForProvince(name, st.subject, selOffset) : supplyForUnit(name, st.subject, selOffset);
+      return { d: d, s: s, rate: ((s - d) / d) * 100 };
+    }
+    var mapPaths = [];
+    if (atNational) {
+      PROVINCES.forEach(function(name){
+        var rr = rateForUnit(name);
+        var geo = window.GEO.provinces[name];
+        var isSel = name === st.region, isHover = st.hoverKey === name;
+        mapPaths.push({
+          d: geo.d, fill: divColorOf(rr.rate), cls: (isSel ? 'is-selected ' : '') + (isHover ? 'is-hover' : ''),
+          title: name + ' · ' + forecastYear + '년 수급 차이율 ' + (rr.rate >= 0 ? '+' : '') + rr.rate.toFixed(1) + '%',
+          onClick: function(){ self.setState({ region: name, district: '전체', hoverKey: '' }); },
+          onEnter: function(){ self.setState({ hoverKey: name }); },
+          onLeave: function(){ self.setState({ hoverKey: '' }); }
+        });
+      });
+    } else {
+      (window.GEO.offices[st.region] || []).forEach(function(o){
+        var rr = rateForUnit(o.office);
+        var isSel = o.office === st.district, isHover = st.hoverKey === o.office;
+        mapPaths.push({
+          d: o.d, fill: divColorOf(rr.rate), cls: (isSel ? 'is-selected ' : '') + (isHover ? 'is-hover' : ''),
+          title: o.office + ' · ' + forecastYear + '년 수급 차이율 ' + (rr.rate >= 0 ? '+' : '') + rr.rate.toFixed(1) + '%',
+          onClick: function(){ self.setState({ district: o.office, hoverKey: '' }); },
+          onEnter: function(){ self.setState({ hoverKey: o.office }); },
+          onLeave: function(){ self.setState({ hoverKey: '' }); }
+        });
+      });
+    }
+    // window.GEO.viewBox ("0 0 660 760") carries ~150 units of unused space below Jeju (actual national
+    // content bbox is roughly y:[-0.1, 610.7]); use a tightly-cropped box here so the map renders
+    // larger within its panel with minimal empty margin beneath Jeju.
+    var NATIONAL_VIEWBOX_TIGHT = '-6 -10 672 632';
+    var mapViewBox = atNational ? NATIONAL_VIEWBOX_TIGHT : (window.GEO.provinces[st.region].bbox || [0, 0, 660, 760]).join(' ');
+
+    function hoverInfoFor(name, forceProvince){
+      var rr = rateForNamed(name, !!forceProvince);
+      var status = gapStatus(rr.rate);
+      return {
+        name: name,
+        mainLabel: forecastYear + '년 예상 수급 차이', mainValue: (rr.s - rr.d >= 0 ? '+' : '') + fmt0(rr.s - rr.d) + '명',
+        rows: [
+          { label: '예상 수요', value: fmt0(rr.d) + '명' },
+          { label: '예상 공급', value: fmt0(rr.s) + '명' },
+          { label: '수급 차이율', value: (rr.rate >= 0 ? '+' : '') + rr.rate.toFixed(1) + '%' },
+          { label: '상태', value: gapStatusLabel(status) }
+        ]
+      };
+    }
+    // hover = temporary peek while the pointer is over a shape; pin = the last-clicked location, which keeps
+    // showing its info even after the pointer leaves (and, for a clicked province, even after drilling into its offices).
+    var hoverActive = !!st.hoverKey && drillList.indexOf(st.hoverKey) !== -1;
+    var pinnedKey = atOffice ? st.district : (!atNational ? st.region : '');
+    var pinnedIsProvince = !atNational && !atOffice;
+    var mapInfoActive = hoverActive || !!pinnedKey;
+    var displayKey = hoverActive ? st.hoverKey : pinnedKey;
+    var displayForceProvince = hoverActive ? false : pinnedIsProvince;
+    var hover = mapInfoActive ? hoverInfoFor(displayKey, displayForceProvince) : { name: '', mainLabel: '', mainValue: '', rows: [] };
+    var hoverVisClass = mapInfoActive ? '' : 'is-hidden';
+
+    // ---------------- top N subject shortage ranking at forecastYear, current scope ----------------
+    var subjectRanking = SUBJECTS.map(function(subj){
+      var d = scopeList.reduce(function(s, n){ return s + demandForUnit(n, subj, selOffset); }, 0);
+      var sup = scopeList.reduce(function(s, n){ return s + supplyForUnit(n, subj, selOffset); }, 0);
+      var shortage = Math.max(d - sup, 0);
+      return { subject: subj, shortage: shortage, demand: d, supply: sup };
+    }).filter(function(r){ return r.shortage > 0; })
+      .sort(function(a, b){ return b.shortage - a.shortage; });
+    var maxShortage = subjectRanking.length ? subjectRanking[0].shortage : 1;
+    var topNItems = subjectRanking.map(function(r){
+      var w = clamp((r.shortage / maxShortage) * 100, 6, 100);
+      return {
+        name: r.subject, style: 'width:' + w + '%;', valueText: fmt0(r.shortage) + '명 부족',
+        selClass: r.subject === st.subject ? 'is-selected' : ''
+      };
+    });
+
+    return {
+      dataAsof: DATA_ASOF,
+      forecastPeriod: forecastPeriod,
+      forecastPeriodOptions: [{ value: 5, label: '5년' }, { value: 10, label: '10년' }],
+      onChangeForecastPeriod: function(e){ self.setState({ forecastPeriod: parseInt(e.target.value, 10) }); },
+      forecastYear: forecastYear, forecastYearOptions: forecastYearOptions,
+      onChangeForecastYear: function(e){ self.setState({ forecastYear: parseInt(e.target.value, 10) }); },
+      region: st.region, district: st.district, level: st.level, subject: st.subject,
+      regionOptions: ['전체'].concat(PROVINCES), districtOptions: districtOptions, districtDisabled: atNational,
+      levelOptions: LEVELS, subjectOptions: ['전체'].concat(SUBJECTS),
+      onChangeRegion: function(e){ self.setState({ region: e.target.value, district: '전체' }); },
+      onChangeDistrict: function(e){ self.setState({ district: e.target.value }); },
+      onChangeLevel: function(e){ self.setState({ level: e.target.value }); },
+      onChangeSubject: function(e){ self.setState({ subject: e.target.value }); },
+      onReset: function(){ self.setState({ forecastPeriod: 5, forecastYear: 2031, region: '전체', district: '전체', level: '전체', subject: '전체', hoverKey: '' }); },
+      regionSelected: !atNational, districtSelected: atOffice, districtShort: atOffice ? officeShortName(st.district) : '',
+      onDrillNational: function(){ self.setState({ region: '전체', district: '전체', hoverKey: '' }); },
+      onDrillRegion: function(){ self.setState({ district: '전체', hoverKey: '' }); },
+      mapPaths: mapPaths, mapViewBox: mapViewBox, mapLevelLabel2: atNational ? '시도' : '교육지원청',
+      hover: hover, hoverVisClass: hoverVisClass, hoverActive: mapInfoActive, hoverInactive: !mapInfoActive,
+      legendSwatches: DIV_SEQ, legendMin: '부족 -10%', legendMax: '과잉 +10%',
+
+      chart: {
+        demandPastPts: demandPastPts, demandFutPts: demandFutPts, supplyPastPts: supplyPastPts, supplyFutPts: supplyFutPts,
+        bandPts: bandPts, ticks: ticks, nowX: xAt(nowIdx), selX: selPoint.x, selYDemand: selPoint.yDemand, selYSupply: selPoint.ySupply
+      },
+      chartHero: chartHero,
+      chartHoverVisClass: chartHoverVisClass,
+      chartBadgeStyle: chartBadgeStyle,
+      chartTooltipStyle: 'left:' + chartTooltipLeftPct + '%; top:' + chartTooltipTopPct + '%;',
+      divCols: divCols,
+      topNItems: topNItems, topNEmpty: topNItems.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>
