@@ -237,7 +237,7 @@ class Component extends DCLogic {
       var a = (t && t.closest) ? t.closest('a[href]') : null;
       if (!a) return;
       var h = a.getAttribute('href') || '';
-      if (h.indexOf('.dc.html') === -1 || h.indexOf('?') !== -1) return;
+      if ((h.indexOf('.dc.html') === -1 && h !== 'index.html') || h.indexOf('?') !== -1) return;
       e.preventDefault();
       window.location.href = h + (window.location.search || '');
     };
